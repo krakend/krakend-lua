@@ -11,7 +11,7 @@ import (
 	"github.com/devopsfaith/krakend/proxy"
 )
 
-func TestProxyFactory(t *testing.T) {
+func TestHandlerFactory(t *testing.T) {
 	cfg := &config.EndpointConfig{
 		Endpoint: "/",
 		ExtraConfig: config.ExtraConfig{
@@ -24,14 +24,15 @@ func TestProxyFactory(t *testing.T) {
 		req:method("POST")
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
-		req:url(req:url() .. "&more=true")`,
+		req:url(req:url() .. "&more=true")
+		req:query("extra", "foo")`,
 			},
 		},
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
-			if URL := r.URL.String(); URL != "/some-path/42?id=1&more=true" {
+			if URL := r.URL.String(); URL != "/some-path/42?extra=foo&id=1&more=true" {
 				t.Errorf("unexpected URL: %s", URL)
 			}
 			if accept := r.Header.Get("Accept"); accept != "application/xml" {
@@ -39,6 +40,9 @@ func TestProxyFactory(t *testing.T) {
 			}
 			if "POST" != r.Method {
 				t.Errorf("unexpected method: %s", r.Method)
+			}
+			if e := r.URL.Query().Get("extra"); e != "foo" {
+				t.Errorf("unexpected querystring extra: '%s' %v", e, r.URL.Query())
 			}
 			// if foo := c.Param("foo"); foo != "some_new_value" {
 			// 	t.Errorf("unexpected param foo: %s", foo)

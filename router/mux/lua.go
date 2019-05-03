@@ -95,6 +95,7 @@ func registerRequestTable(r *http.Request, pe mux.ParamExtractor, b *binder.Bind
 
 	t.Dynamic("method", mctx.method)
 	t.Dynamic("url", mctx.url)
+	t.Dynamic("query", mctx.query)
 	t.Dynamic("params", mctx.params)
 	t.Dynamic("headers", mctx.headers)
 	t.Dynamic("body", mctx.body)
@@ -130,6 +131,26 @@ func (r *muxContext) url(c *binder.Context) error {
 		c.Push().String(req.URL.String())
 	} else {
 		req.URL, _ = url.Parse(c.Arg(2).String())
+	}
+
+	return nil
+}
+
+func (r *muxContext) query(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*muxContext)
+	if !ok {
+		return errContextExpected
+	}
+
+	switch c.Top() {
+	case 1:
+		return errNeedsArguments
+	case 2:
+		c.Push().String(req.URL.Query().Get(c.Arg(2).String()))
+	case 3:
+		q := req.URL.Query()
+		q.Set(c.Arg(2).String(), c.Arg(3).String())
+		req.URL.RawQuery = q.Encode()
 	}
 
 	return nil

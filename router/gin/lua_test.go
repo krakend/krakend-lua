@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func TestProxyFactory(t *testing.T) {
+func TestHandlerFactory(t *testing.T) {
 	cfg := &config.EndpointConfig{
 		Endpoint: "/",
 		ExtraConfig: config.ExtraConfig{
@@ -25,14 +25,15 @@ func TestProxyFactory(t *testing.T) {
 		req:method("POST")
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
-		req:url(req:url() .. "&more=true")`,
+		req:url(req:url() .. "&more=true")
+		req:query("extra", "foo")`,
 			},
 		},
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) gin.HandlerFunc {
 		return func(c *gin.Context) {
-			if URL := c.Request.URL.String(); URL != "/some-path/42?id=1&more=true" {
+			if URL := c.Request.URL.String(); URL != "/some-path/42?extra=foo&id=1&more=true" {
 				t.Errorf("unexpected URL: %s", URL)
 			}
 			if accept := c.Request.Header.Get("Accept"); accept != "application/xml" {
@@ -46,6 +47,9 @@ func TestProxyFactory(t *testing.T) {
 			}
 			if id := c.Param("id"); id != "42" {
 				t.Errorf("unexpected param id: %s", id)
+			}
+			if e := c.Query("extra"); e != "foo" {
+				t.Errorf("unexpected querystring extra: '%s'", e)
 			}
 		}
 	}
