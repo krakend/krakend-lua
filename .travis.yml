@@ -6,4 +6,4 @@ go:
     - "1.10.x"
 
 script:
-    - go test -v -cover
+    - go test -v -cover -bench . -benchtime 5s ./...
