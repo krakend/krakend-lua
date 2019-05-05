@@ -72,7 +72,11 @@ func process(r *http.Request, pe mux.ParamExtractor, cfg lua.Config) error {
 	registerRequestTable(r, pe, b)
 
 	for _, source := range cfg.Sources {
-		if err := b.DoString(source); err != nil {
+		src, ok := cfg.Get(source)
+		if !ok {
+			return lua.ErrUnknownSource(source)
+		}
+		if err := b.DoString(src); err != nil {
 			return err
 		}
 	}

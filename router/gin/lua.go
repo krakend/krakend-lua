@@ -64,7 +64,11 @@ func process(c *gin.Context, cfg lua.Config) error {
 	registerCtxTable(c, b)
 
 	for _, source := range cfg.Sources {
-		if err := b.DoString(source); err != nil {
+		src, ok := cfg.Get(source)
+		if !ok {
+			return lua.ErrUnknownSource(source)
+		}
+		if err := b.DoString(src); err != nil {
 			return err
 		}
 	}
