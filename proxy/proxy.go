@@ -54,6 +54,7 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 			IncludeGoStackTrace: true,
 		})
 
+		registerHTTPRequest(b)
 		registerRequestTable(req, b)
 
 		for _, source := range cfg.Sources {
