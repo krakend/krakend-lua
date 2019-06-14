@@ -11,6 +11,15 @@ import (
 )
 
 func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
+	tab := b.Table("luaTable")
+	tab.Dynamic("get", tableGet)
+	tab.Dynamic("set", tableSet)
+	tab.Dynamic("len", tableLen)
+	list := b.Table("luaList")
+	list.Dynamic("get", listGet)
+	list.Dynamic("set", listSet)
+	list.Dynamic("len", listLen)
+
 	r := &response{resp}
 
 	t := b.Table("response")
@@ -106,44 +115,182 @@ func (r *response) data(c *binder.Context) error {
 	if !ok {
 		return errResponseExpected
 	}
-	switch c.Top() {
-	case 1:
+	c.Push().Data(&luaTable{data: resp.Data}, "luaTable")
+
+	return nil
+}
+
+func tableLen(c *binder.Context) error {
+	tab, ok := c.Arg(1).Data().(*luaTable)
+	if !ok {
+		return errResponseExpected
+	}
+	c.Push().Number(float64(len(tab.data)))
+	return nil
+}
+
+func listLen(c *binder.Context) error {
+	list, ok := c.Arg(1).Data().(*luaList)
+	if !ok {
+		return errResponseExpected
+	}
+	c.Push().Number(float64(len(list.data)))
+	return nil
+}
+
+func tableGet(c *binder.Context) error {
+	if c.Top() != 2 {
 		return errNeedsArguments
-	case 2:
-		data := resp.Data[c.Arg(2).String()]
-		switch t := data.(type) {
-		case string:
-			c.Push().String(t)
-		case int:
-			c.Push().Number(float64(t))
-		case float64:
-			c.Push().Number(t)
-		case bool:
-			c.Push().Bool(t)
-		default:
-			c.Push().Data(t, "table")
-		}
-	case 3:
-		key := c.Arg(2).String()
-		switch t := c.Arg(3).Any().(type) {
-		case lua.LString:
-			resp.Data[key] = c.Arg(3).String()
-		case lua.LNumber:
-			resp.Data[key] = c.Arg(3).Number()
-		case lua.LBool:
-			resp.Data[key] = c.Arg(3).Bool()
-		case *lua.LTable:
-			res := map[string]interface{}{}
-			t.ForEach(func(k, v lua.LValue) {
-				parseToTable(k, v, res)
-			})
-			resp.Data[key] = res
-		case *lua.LUserData:
-			resp.Data[key] = t.Value
+	}
+	tab, ok := c.Arg(1).Data().(*luaTable)
+	if !ok {
+		return errResponseExpected
+	}
+	data, ok := tab.data[c.Arg(2).String()]
+	if !ok {
+		return nil
+	}
+	switch t := data.(type) {
+	case string:
+		c.Push().String(t)
+	case int:
+		c.Push().Number(float64(t))
+	case float64:
+		c.Push().Number(t)
+	case bool:
+		c.Push().Bool(t)
+	case []interface{}:
+		c.Push().Data(&luaList{data: t}, "luaList")
+	case map[string]interface{}:
+		c.Push().Data(&luaTable{data: t}, "luaTable")
+	}
+
+	return nil
+}
+
+func listGet(c *binder.Context) error {
+	if c.Top() != 2 {
+		return errNeedsArguments
+	}
+	tab, ok := c.Arg(1).Data().(*luaList)
+	if !ok {
+		return errResponseExpected
+	}
+	index := int(c.Arg(2).Number())
+	if index < 0 || index >= len(tab.data) {
+		return nil
+	}
+	switch t := tab.data[index].(type) {
+	case string:
+		c.Push().String(t)
+	case int:
+		c.Push().Number(float64(t))
+	case float64:
+		c.Push().Number(t)
+	case bool:
+		c.Push().Bool(t)
+	case []interface{}:
+		c.Push().Data(&luaList{data: t}, "luaList")
+	case map[string]interface{}:
+		c.Push().Data(&luaTable{data: t}, "luaTable")
+	}
+
+	return nil
+}
+
+func tableSet(c *binder.Context) error {
+	if c.Top() != 3 {
+		return errNeedsArguments
+	}
+	tab, ok := c.Arg(1).Data().(*luaTable)
+	if !ok {
+		return errResponseExpected
+	}
+	key := c.Arg(2).String()
+	switch t := c.Arg(3).Any().(type) {
+	case lua.LString:
+		tab.data[key] = c.Arg(3).String()
+	case lua.LNumber:
+		tab.data[key] = c.Arg(3).Number()
+	case lua.LBool:
+		tab.data[key] = c.Arg(3).Bool()
+	case *lua.LTable:
+		res := map[string]interface{}{}
+		t.ForEach(func(k, v lua.LValue) {
+			parseToTable(k, v, res)
+		})
+		tab.data[key] = res
+	case *lua.LUserData:
+		switch v := t.Value.(type) {
+		case *luaTable:
+			tab.data[key] = v.data
+		case *luaList:
+			tab.data[key] = v.data
 		}
 	}
 
 	return nil
+}
+
+func listSet(c *binder.Context) error {
+	if c.Top() != 3 {
+		return errNeedsArguments
+	}
+	tab, ok := c.Arg(1).Data().(*luaList)
+	if !ok {
+		return errResponseExpected
+	}
+	key := int(c.Arg(2).Number())
+	if key < 0 || key >= len(tab.data) {
+		return nil
+	}
+	switch t := c.Arg(3).Any().(type) {
+	case lua.LString:
+		tab.data[key] = c.Arg(3).String()
+	case lua.LNumber:
+		tab.data[key] = c.Arg(3).Number()
+	case lua.LBool:
+		tab.data[key] = c.Arg(3).Bool()
+	case *lua.LTable:
+		res := map[string]interface{}{}
+		t.ForEach(func(k, v lua.LValue) {
+			parseToTable(k, v, res)
+		})
+		tab.data[key] = res
+	case *lua.LUserData:
+		switch v := t.Value.(type) {
+		case *luaTable:
+			tab.data[key] = v.data
+		case *luaList:
+			tab.data[key] = v.data
+		}
+	}
+
+	return nil
+}
+
+type luaTable struct {
+	data map[string]interface{}
+}
+
+func (l *luaTable) get(k string) interface{} {
+	return l.data[k]
+}
+
+func (l *luaTable) set(k string, v interface{}) {
+	l.data[k] = v
+}
+
+type luaList struct {
+	data []interface{}
+}
+
+func (l *luaList) get(k int) interface{} {
+	return l.data[k]
+}
+
+func (l *luaList) set(k int, v interface{}) {
+	l.data[k] = v
 }
 
 func parseToTable(k, v lua.LValue, acc map[string]interface{}) {
@@ -160,7 +307,12 @@ func parseToTable(k, v lua.LValue, acc map[string]interface{}) {
 			acc[k.String()] = f
 		}
 	case lua.LTUserData:
-		acc[k.String()] = v.(*lua.LUserData).Value
+		switch v := v.(*lua.LUserData).Value.(type) {
+		case *luaTable:
+			acc[k.String()] = v.data
+		case *luaList:
+			acc[k.String()] = v.data
+		}
 	case lua.LTTable:
 		res := map[string]interface{}{}
 		v.(*lua.LTable).ForEach(func(k, v lua.LValue) {

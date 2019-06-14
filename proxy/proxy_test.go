@@ -3,6 +3,7 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/url"
 	"testing"
 
@@ -20,7 +21,19 @@ func TestProxyFactory(t *testing.T) {
 	}
 
 	expectedResponse := &proxy.Response{
-		Data: map[string]interface{}{"ok": true},
+		Data: map[string]interface{}{
+			"ok": true,
+			"collection": []interface{}{
+				map[string]interface{}{
+					"id":      1,
+					"comment": "none",
+				},
+				map[string]interface{}{
+					"id":      42,
+					"comment": "some",
+				},
+			},
+		},
 		Metadata: proxy.Metadata{
 			Headers: map[string][]string{},
 		},
@@ -62,15 +75,27 @@ func TestProxyFactory(t *testing.T) {
 
 				"post": `local resp = response.load()
 		resp:isComplete(true)
-		resp:data("foo", "some_new_value")
+		local responseData = resp:data()
+		responseData:set("foo", "some_new_value")
 
 		data = {}
 		data["bar"] = fact(5)
 		data["foobar"] = true
 		data["supu"] = {}
 		data["supu"]["tupu"] = "some"
-		data["supu"]["original"] = resp:data("ok")
-		resp:data("more", data)
+		data["supu"]["original"] = responseData:get("ok")
+		local col = responseData:get("collection")
+		data["collection_size"] = col:len()
+
+		local id_list = {}
+		for i=0,data["collection_size"]-1 do
+			local element = col:get(i)
+			local id = element:get("id")
+			table.insert(id_list, id)
+		end
+		data["ids"] = id_list
+
+		responseData:set("more", data)
 
 		resp:headers("Content-Type", "application/xml")
 		resp:statusCode(200)`,
@@ -112,5 +137,38 @@ func TestProxyFactory(t *testing.T) {
 	}
 	if bar, ok := v["bar"].(int); !ok || bar != 120 {
 		t.Errorf("unexpected field 'more.bar': %v", v["bar"])
+	}
+
+	b, _ := json.MarshalIndent(resp.Data, "", "\t")
+
+	expectedResponseString := `{
+	"collection": [
+		{
+			"comment": "none",
+			"id": 1
+		},
+		{
+			"comment": "some",
+			"id": 42
+		}
+	],
+	"foo": "some_new_value",
+	"more": {
+		"bar": 120,
+		"collection_size": 2,
+		"foobar": true,
+		"ids": {
+			"1": 1,
+			"2": 42
+		},
+		"supu": {
+			"original": true,
+			"tupu": "some"
+		}
+	},
+	"ok": true
+}`
+	if expectedResponseString != string(b) {
+		t.Errorf("unexpected response %s", string(b))
 	}
 }
