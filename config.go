@@ -14,11 +14,12 @@ import (
 )
 
 type Config struct {
-	Sources      []string
-	PreCode      string
-	PostCode     string
-	SkipNext     bool
-	SourceLoader SourceLoader
+	Sources       []string
+	PreCode       string
+	PostCode      string
+	SkipNext      bool
+	AllowOpenLibs bool
+	SourceLoader  SourceLoader
 }
 
 func (c *Config) Get(k string) (string, bool) {
@@ -47,6 +48,9 @@ func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, er
 	}
 	if b, ok := c["skip_next"].(bool); ok && b {
 		res.SkipNext = b
+	}
+	if b, ok := c["allow_open_libs"].(bool); ok && b {
+		res.AllowOpenLibs = b
 	}
 
 	sources, ok := c["sources"].([]interface{})

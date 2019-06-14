@@ -66,6 +66,7 @@ func TestProxyFactory(t *testing.T) {
 				"sources": []interface{}{
 					"../lua/factorial.lua",
 				},
+				"allow_open_libs": true,
 
 				"pre": `local req = request.load()
 		req:method("POST")
@@ -96,6 +97,8 @@ func TestProxyFactory(t *testing.T) {
 		data["ids"] = id_list
 
 		responseData:set("more", data)
+		local bar = string.find('banana', 'an')
+		responseData:set("bar", bar)
 
 		resp:headers("Content-Type", "application/xml")
 		resp:statusCode(200)`,
@@ -142,6 +145,7 @@ func TestProxyFactory(t *testing.T) {
 	b, _ := json.MarshalIndent(resp.Data, "", "\t")
 
 	expectedResponseString := `{
+	"bar": 2,
 	"collection": [
 		{
 			"comment": "none",

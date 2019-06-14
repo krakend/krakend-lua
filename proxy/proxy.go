@@ -50,7 +50,7 @@ func BackendFactory(l logging.Logger, bf proxy.BackendFactory) proxy.BackendFact
 func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 	return func(ctx context.Context, req *proxy.Request) (resp *proxy.Response, err error) {
 		b := binder.New(binder.Options{
-			SkipOpenLibs:        true,
+			SkipOpenLibs:        !cfg.AllowOpenLibs,
 			IncludeGoStackTrace: true,
 		})
 
