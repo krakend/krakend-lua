@@ -65,7 +65,7 @@ func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtra
 
 func process(r *http.Request, pe mux.ParamExtractor, cfg lua.Config) error {
 	b := binder.New(binder.Options{
-		SkipOpenLibs:        true,
+		SkipOpenLibs:        !cfg.AllowOpenLibs,
 		IncludeGoStackTrace: true,
 	})
 

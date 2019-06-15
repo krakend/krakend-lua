@@ -57,7 +57,7 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 
 func process(c *gin.Context, cfg lua.Config) error {
 	b := binder.New(binder.Options{
-		SkipOpenLibs:        true,
+		SkipOpenLibs:        !cfg.AllowOpenLibs,
 		IncludeGoStackTrace: true,
 	})
 
