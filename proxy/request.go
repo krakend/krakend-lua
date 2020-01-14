@@ -135,7 +135,7 @@ func (r *request) body(c *binder.Context) error {
 		return errRequestExpected
 	}
 
-	if c.Top() == 1 {
+	if c.Top() == 2 {
 		req.Body = ioutil.NopCloser(bytes.NewBufferString(c.Arg(2).String()))
 		return nil
 	}

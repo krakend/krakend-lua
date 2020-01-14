@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/devopsfaith/krakend/config"
@@ -37,6 +39,7 @@ func TestProxyFactory(t *testing.T) {
 		Metadata: proxy.Metadata{
 			Headers: map[string][]string{},
 		},
+		Io: strings.NewReader("initial resp content"),
 	}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
@@ -52,6 +55,13 @@ func TestProxyFactory(t *testing.T) {
 			}
 			if req.URL.String() != "https://some.host.tld/path/to/resource?and=querystring&more=true" {
 				t.Errorf("unexpected URL: %s", req.URL.String())
+			}
+			b, err := ioutil.ReadAll(req.Body)
+			if err != nil {
+				t.Error(err)
+			}
+			if "initial req content foo" != string(b) {
+				t.Errorf("unexpected body: %s", string(b))
 			}
 			return expectedResponse, nil
 		}, nil
@@ -72,7 +82,8 @@ func TestProxyFactory(t *testing.T) {
 		req:method("POST")
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
-		req:url(req:url() .. "&more=true")`,
+		req:url(req:url() .. "&more=true")
+		req:body(req:body() .. " foo")`,
 
 				"post": `local resp = response.load()
 		resp:isComplete(true)
@@ -101,7 +112,8 @@ func TestProxyFactory(t *testing.T) {
 		responseData:set("bar", bar)
 
 		resp:headers("Content-Type", "application/xml")
-		resp:statusCode(200)`,
+		resp:statusCode(200)
+		resp:body(resp:body() .. " bar")`,
 			},
 		},
 	})
@@ -112,6 +124,7 @@ func TestProxyFactory(t *testing.T) {
 		Params:  map[string]string{"Id": "42"},
 		Headers: map[string][]string{},
 		URL:     URL,
+		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
 	})
 	if err != nil {
 		t.Errorf("unexpected error %s", err.Error())
@@ -174,5 +187,13 @@ func TestProxyFactory(t *testing.T) {
 }`
 	if expectedResponseString != string(b) {
 		t.Errorf("unexpected response %s", string(b))
+	}
+
+	b, err = ioutil.ReadAll(resp.Io)
+	if err != nil {
+		t.Error(err)
+	}
+	if "initial resp content bar" != string(b) {
+		t.Errorf("unexpected body: %s", string(b))
 	}
 }
