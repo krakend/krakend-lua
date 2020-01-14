@@ -1,6 +1,7 @@
 package gin
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,7 +27,8 @@ func TestHandlerFactory(t *testing.T) {
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
 		req:url(req:url() .. "&more=true")
-		req:query("extra", "foo")`,
+		req:query("extra", "foo")
+		req:body("fooooooo")`,
 			},
 		},
 	}
@@ -50,6 +52,14 @@ func TestHandlerFactory(t *testing.T) {
 			}
 			if e := c.Query("extra"); e != "foo" {
 				t.Errorf("unexpected querystring extra: '%s'", e)
+			}
+			b, err := ioutil.ReadAll(c.Request.Body)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if "fooooooo" != string(b) {
+				t.Errorf("unexpected body: %s", string(b))
 			}
 		}
 	}
