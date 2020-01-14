@@ -95,7 +95,7 @@ func (r *response) body(c *binder.Context) error {
 		return errResponseExpected
 	}
 
-	if c.Top() == 1 {
+	if c.Top() == 2 {
 		resp.Io = bytes.NewBufferString(c.Arg(2).String())
 		return nil
 	}
