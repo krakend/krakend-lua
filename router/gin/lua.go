@@ -195,7 +195,7 @@ func (r *ginContext) requestBody(c *binder.Context) error {
 		return errContextExpected
 	}
 
-	if c.Top() == 1 {
+	if c.Top() == 2 {
 		req.Request.Body = ioutil.NopCloser(bytes.NewBufferString(c.Arg(2).String()))
 		return nil
 	}

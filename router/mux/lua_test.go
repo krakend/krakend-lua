@@ -1,6 +1,7 @@
 package mux
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,7 +26,8 @@ func TestHandlerFactory(t *testing.T) {
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
 		req:url(req:url() .. "&more=true")
-		req:query("extra", "foo")`,
+		req:query("extra", "foo")
+		req:body(req:body().."fooooooo")`,
 			},
 		},
 	}
@@ -50,6 +52,14 @@ func TestHandlerFactory(t *testing.T) {
 			// if id := c.Param("id"); id != "42" {
 			// 	t.Errorf("unexpected param id: %s", id)
 			// }
+			b, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				t.Error(err)
+				return
+			}
+			if "fooooooo" != string(b) {
+				t.Errorf("unexpected body: %s", string(b))
+			}
 		}
 	}
 	handler := HandlerFactory(logging.NoOp, hf, func(_ *http.Request) map[string]string {
