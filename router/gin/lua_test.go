@@ -28,7 +28,7 @@ func TestHandlerFactory(t *testing.T) {
 		req:headers("Accept", "application/xml")
 		req:url(req:url() .. "&more=true")
 		req:query("extra", "foo")
-		req:body("fooooooo")`,
+		req:body(req:body().."fooooooo")`,
 			},
 		},
 	}
