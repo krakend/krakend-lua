@@ -83,7 +83,7 @@ func TestProxyFactory(t *testing.T) {
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
 		req:url(req:url() .. "&more=true")
-		req:body(req:body() .. " foo")`,
+		req:body(req:body() .. " foo" .. req:headers("unknown"))`,
 
 				"post": `local resp = response.load()
 		resp:isComplete(true)
@@ -113,7 +113,7 @@ func TestProxyFactory(t *testing.T) {
 
 		resp:headers("Content-Type", "application/xml")
 		resp:statusCode(200)
-		resp:body(resp:body() .. " bar")`,
+		resp:body(resp:body() .. " bar" .. resp:headers("unknown"))`,
 			},
 		},
 	})
