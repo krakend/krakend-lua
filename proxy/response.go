@@ -81,7 +81,12 @@ func (r *response) headers(c *binder.Context) error {
 	case 1:
 		return errNeedsArguments
 	case 2:
-		c.Push().String(resp.Metadata.Headers[c.Arg(2).String()][0])
+		headers := resp.Metadata.Headers[c.Arg(2).String()]
+		if len(headers) == 0 {
+			c.Push().String("")
+		} else {
+			c.Push().String(headers[0])
+		}
 	case 3:
 		resp.Metadata.Headers[c.Arg(2).String()] = []string{c.Arg(3).String()}
 	}
