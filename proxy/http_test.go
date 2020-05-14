@@ -1,12 +1,30 @@
 package proxy
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 
 	"github.com/alexeyco/binder"
 )
 
 func Example_RegisterBackendModule() {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		headers, _ := json.Marshal(r.Header)
+		fmt.Println(string(headers))
+		fmt.Println(r.Method)
+
+		if r.Body != nil {
+			body, _ := ioutil.ReadAll(r.Body)
+			fmt.Println(string(body))
+			r.Body.Close()
+		}
+		fmt.Fprintln(w, "Hello, client")
+	}))
+	defer ts.Close()
+
 	bindr := binder.New(binder.Options{
 		SkipOpenLibs:        true,
 		IncludeGoStackTrace: true,
@@ -14,25 +32,50 @@ func Example_RegisterBackendModule() {
 
 	registerHTTPRequest(bindr)
 
-	if err := bindr.DoString(sampleLuaCode); err != nil {
+	code := fmt.Sprintf("local url = '%s'\n%s", ts.URL, sampleLuaCode)
+
+	if err := bindr.DoString(code); err != nil {
 		fmt.Println(err)
 	}
 
 	// output:
 	// lua http test
+	//
+	// {"123":["456"],"Accept-Encoding":["gzip"],"Content-Length":["13"],"Foo":["bar"],"User-Agent":["Go-http-client/1.1"]}
+	// POST
+	// {"foo":"bar"}
 	// 200
-	// application/json
-	// {
-	//     "uno":"el brikindans",
-	//     "dos":"el crusaíto",
-	//     "tres":"el maiquelyason",
-	//     "cuatro":"el robocop"
-	// }
+	// text/plain; charset=utf-8
+	// Hello, client
+	//
+	// {"Accept-Encoding":["gzip"],"Content-Length":["13"],"User-Agent":["Go-http-client/1.1"]}
+	// POST
+	// {"foo":"bar"}
+	// 200
+	// text/plain; charset=utf-8
+	// Hello, client
+	//
+	// {"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}
+	// GET
+	//
+	// 200
+	// text/plain; charset=utf-8
+	// Hello, client
 }
 
 const sampleLuaCode = `
-print("lua http test")
-local r = http_response.new('http://www.mocky.io/v2/5cec657f330000165f6d7a83')
+print("lua http test\n")
+local r = http_response.new(url, "POST", '{"foo":"bar"}', {["foo"] = "bar", ["123"] = "456"})
+print(r:statusCode())
+print(r:headers('Content-Type'))
+print(r:body())
+
+local r = http_response.new(url, "POST", '{"foo":"bar"}')
+print(r:statusCode())
+print(r:headers('Content-Type'))
+print(r:body())
+
+local r = http_response.new(url)
 print(r:statusCode())
 print(r:headers('Content-Type'))
 print(r:body())
