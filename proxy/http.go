@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/alexeyco/binder"
+	lua "github.com/yuin/gopher-lua"
 )
 
 func registerHTTPRequest(b *binder.Binder) {
@@ -22,7 +23,7 @@ func registerHTTPRequest(b *binder.Binder) {
 
 func newHttpResponse(c *binder.Context) error {
 	if c.Top() == 0 || c.Top() == 2 {
-		return errors.New("need 1 or 3 arguments")
+		return errors.New("need 1, 3 or 4 arguments")
 	}
 
 	URL := c.Arg(1).String()
@@ -41,6 +42,16 @@ func newHttpResponse(c *binder.Context) error {
 	req, err := http.NewRequest(method, URL, bytes.NewBufferString(body))
 	if err != nil {
 		return err
+	}
+
+	if c.Top() == 4 {
+		headers, ok := c.Arg(4).Any().(*lua.LTable)
+
+		if ok {
+			headers.ForEach(func(key, value lua.LValue) {
+				req.Header.Add(key.String(), value.String())
+			})
+		}
 	}
 
 	resp, err := http.DefaultClient.Do(req)
