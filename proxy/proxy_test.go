@@ -36,10 +36,8 @@ func TestProxyFactory(t *testing.T) {
 				},
 			},
 		},
-		Metadata: proxy.Metadata{
-			Headers: map[string][]string{},
-		},
-		Io: strings.NewReader("initial resp content"),
+		Metadata: proxy.Metadata{},
+		Io:       strings.NewReader("initial resp content"),
 	}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {

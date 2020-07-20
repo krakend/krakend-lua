@@ -21,6 +21,12 @@ func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
 	list.Dynamic("len", listLen)
 
 	r := &response{resp}
+	if r.Metadata.Headers == nil {
+		r.Metadata.Headers = map[string][]string{}
+	}
+	if r.Data == nil {
+		r.Data = map[string]interface{}{}
+	}
 
 	t := b.Table("response")
 
