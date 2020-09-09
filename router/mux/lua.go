@@ -54,6 +54,12 @@ func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtra
 
 		return func(w http.ResponseWriter, r *http.Request) {
 			if err := process(r, pe, cfg); err != nil {
+				err = lua.ToError(err)
+				if errhttp, ok := err.(errHTTP); ok {
+					http.Error(w, err.Error(), errhttp.StatusCode())
+					return
+				}
+
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -61,6 +67,11 @@ func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtra
 			handlerFunc(w, r)
 		}
 	}
+}
+
+type errHTTP interface {
+	error
+	StatusCode() int
 }
 
 func process(r *http.Request, pe mux.ParamExtractor, cfg lua.Config) error {
