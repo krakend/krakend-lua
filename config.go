@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 
@@ -130,23 +129,3 @@ var (
 	ErrNoExtraConfig    = errors.New("no extra config")
 	ErrWrongExtraConfig = errors.New("wrong extra config")
 )
-
-type ErrWrongChecksumType string
-
-func (e ErrWrongChecksumType) Error() string {
-	return "lua: wrong cheksum type for source " + string(e)
-}
-
-type ErrWrongChecksum struct {
-	Source, Actual, Expected string
-}
-
-func (e ErrWrongChecksum) Error() string {
-	return fmt.Sprintf("lua: wrong cheksum for source %s. have: %v, want: %v", e.Source, e.Actual, e.Expected)
-}
-
-type ErrUnknownSource string
-
-func (e ErrUnknownSource) Error() string {
-	return "lua: unable to load required source " + string(e)
-}

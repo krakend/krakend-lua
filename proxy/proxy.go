@@ -54,6 +54,7 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 			IncludeGoStackTrace: true,
 		})
 
+		lua.RegisterErrors(b)
 		registerHTTPRequest(b)
 		registerRequestTable(req, b)
 
@@ -63,18 +64,18 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 				return nil, lua.ErrUnknownSource(source)
 			}
 			if err := b.DoString(src); err != nil {
-				return nil, err
+				return nil, lua.ToError(err)
 			}
 		}
 
 		if err := b.DoString(cfg.PreCode); err != nil {
-			return nil, err
+			return nil, lua.ToError(err)
 		}
 
 		if !cfg.SkipNext {
 			resp, err = next(ctx, req)
 			if err != nil {
-				return resp, err
+				return resp, lua.ToError(err)
 			}
 		} else {
 			resp = &proxy.Response{}
@@ -82,7 +83,7 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 
 		registerResponseTable(resp, b)
 
-		err = b.DoString(cfg.PostCode)
+		err = lua.ToError(b.DoString(cfg.PostCode))
 
 		return resp, err
 	}

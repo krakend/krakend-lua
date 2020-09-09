@@ -46,6 +46,11 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 
 		return func(c *gin.Context) {
 			if err := process(c, cfg); err != nil {
+				err = lua.ToError(err)
+				if errhttp, ok := err.(errHTTP); ok {
+					c.AbortWithError(errhttp.StatusCode(), err)
+					return
+				}
 				c.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
@@ -55,12 +60,18 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 	}
 }
 
+type errHTTP interface {
+	error
+	StatusCode() int
+}
+
 func process(c *gin.Context, cfg lua.Config) error {
 	b := binder.New(binder.Options{
 		SkipOpenLibs:        !cfg.AllowOpenLibs,
 		IncludeGoStackTrace: true,
 	})
 
+	lua.RegisterErrors(b)
 	registerCtxTable(c, b)
 
 	for _, source := range cfg.Sources {

@@ -77,3 +77,65 @@ func TestHandlerFactory(t *testing.T) {
 		return
 	}
 }
+
+func TestHandlerFactory_error(t *testing.T) {
+	cfg := &config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			router.Namespace: map[string]interface{}{
+				"pre": `custom_error('expect me')`,
+			},
+		},
+	}
+
+	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			t.Error("the handler shouldn't be executed")
+		}
+	}
+	handler := HandlerFactory(logging.NoOp, hf, func(_ *http.Request) map[string]string {
+		return map[string]string{}
+	})(cfg, proxy.NoopProxy)
+
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req.Header.Set("Accept", "application/json")
+	w := httptest.NewRecorder()
+
+	handler(w, req)
+
+	if w.Code != 500 {
+		t.Errorf("unexpected status code %d", w.Code)
+		return
+	}
+}
+
+func TestHandlerFactory_errorHTTP(t *testing.T) {
+	cfg := &config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			router.Namespace: map[string]interface{}{
+				"pre": `custom_error('expect me', 999)`,
+			},
+		},
+	}
+
+	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			t.Error("the handler shouldn't be executed")
+		}
+	}
+	handler := HandlerFactory(logging.NoOp, hf, func(_ *http.Request) map[string]string {
+		return map[string]string{}
+	})(cfg, proxy.NoopProxy)
+
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req.Header.Set("Accept", "application/json")
+	w := httptest.NewRecorder()
+
+	handler(w, req)
+
+	if w.Code != 999 {
+		t.Errorf("unexpected status code %d", w.Code)
+		return
+	}
+}
