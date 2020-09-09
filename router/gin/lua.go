@@ -61,6 +61,7 @@ func process(c *gin.Context, cfg lua.Config) error {
 		IncludeGoStackTrace: true,
 	})
 
+	lua.RegisterErrors(b)
 	registerCtxTable(c, b)
 
 	for _, source := range cfg.Sources {

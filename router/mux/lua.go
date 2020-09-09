@@ -69,6 +69,7 @@ func process(r *http.Request, pe mux.ParamExtractor, cfg lua.Config) error {
 		IncludeGoStackTrace: true,
 	})
 
+	lua.RegisterErrors(b)
 	registerRequestTable(r, pe, b)
 
 	for _, source := range cfg.Sources {

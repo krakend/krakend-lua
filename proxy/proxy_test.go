@@ -4,15 +4,98 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/url"
 	"strings"
 	"testing"
 
+	lua "github.com/devopsfaith/krakend-lua"
 	"github.com/devopsfaith/krakend/config"
 	"github.com/devopsfaith/krakend/logging"
 	"github.com/devopsfaith/krakend/proxy"
 )
+
+func TestProxyFactory_error(t *testing.T) {
+	testProxyFactoryError(t, `custom_error('expect me')`, "expect me", false, 0)
+}
+
+func TestProxyFactory_errorHTTP(t *testing.T) {
+	testProxyFactoryError(t, `custom_error('expect me', 404)`, "expect me", true, 404)
+}
+
+func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statusCode int) {
+	buff := bytes.NewBuffer(make([]byte, 1024))
+	logger, err := logging.NewLogger("ERROR", buff, "pref")
+	if err != nil {
+		t.Error("building the logger:", err.Error())
+		return
+	}
+
+	unexpectedErr := errors.New("never seen")
+
+	explosive := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
+			return nil, unexpectedErr
+		}, nil
+	})
+
+	prxy, err := ProxyFactory(logger, explosive).New(&config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			ProxyNamespace: map[string]interface{}{
+				"pre": code,
+			},
+		},
+	})
+
+	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
+
+	resp, err := prxy(context.Background(), &proxy.Request{
+		Method:  "GET",
+		Path:    "/some-path",
+		Params:  map[string]string{"Id": "42"},
+		Headers: map[string][]string{},
+		URL:     URL,
+		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
+	})
+
+	if resp != nil {
+		t.Errorf("unexpected response: %v", resp)
+		return
+	}
+
+	if err == unexpectedErr {
+		t.Errorf("the script did not stop the pipe execution: %v", err)
+		return
+	}
+
+	switch err.(type) {
+	case lua.ErrInternalHTTP:
+		if !isHTTP {
+			t.Errorf("unexpected http error: %v (%T)", err, err)
+			return
+		}
+		if sc := err.(lua.ErrInternalHTTP).StatusCode(); sc != statusCode {
+			t.Errorf("unexpected http status code: %d", sc)
+			return
+		}
+	case lua.ErrInternal:
+		if isHTTP {
+			t.Errorf("unexpected internal error: %v (%T)", err, err)
+			return
+		}
+	default:
+		t.Errorf("unexpected error: %v (%T)", err, err)
+		return
+	}
+
+	if e := err.Error(); e != errMsg {
+		t.Errorf("unexpected error. have: '%s', want: '%s' (%T)", e, errMsg, err)
+		return
+	}
+}
 
 func TestProxyFactory(t *testing.T) {
 	buff := bytes.NewBuffer(make([]byte, 1024))
@@ -194,4 +277,65 @@ func TestProxyFactory(t *testing.T) {
 	if "initial resp content bar" != string(b) {
 		t.Errorf("unexpected body: %s", string(b))
 	}
+}
+
+func Test_Issue7(t *testing.T) {
+	buff := bytes.NewBuffer(make([]byte, 1024))
+	logger, err := logging.NewLogger("ERROR", buff, "pref")
+	if err != nil {
+		t.Error("building the logger:", err.Error())
+		return
+	}
+
+	response := `{
+  "items": [
+    {"id": 1, "name": "foo", "funny_property": true, "long_name": "foo bar"},
+    {"id": 2, "name": "foo2", "funny_property": false, "long_name": "foo2 bar2"}
+  ]
+}`
+	r := map[string]interface{}{}
+	json.Unmarshal([]byte(response), &r)
+
+	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
+		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+			return &proxy.Response{
+				Data: r,
+				Metadata: proxy.Metadata{
+					Headers: map[string][]string{},
+				},
+			}, nil
+		}, nil
+	})
+
+	prxy, err := ProxyFactory(logger, dummyProxyFactory).New(&config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			ProxyNamespace: map[string]interface{}{
+				"post": `
+local resp = response.load()
+local responseData = resp:data()
+
+for key, value in pairs(responseData:get("items")) do
+    print(key, " -- ", value)
+end
+
+
+`,
+			},
+		},
+	})
+
+	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
+
+	resp, err := prxy(context.Background(), &proxy.Request{
+		Method:  "GET",
+		Path:    "/some-path",
+		Params:  map[string]string{"Id": "42"},
+		Headers: map[string][]string{},
+		URL:     URL,
+		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
+	})
+
+	fmt.Println(resp)
+	fmt.Println(buff.String())
 }
