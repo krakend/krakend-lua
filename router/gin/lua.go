@@ -99,6 +99,7 @@ func registerCtxTable(c *gin.Context, b *binder.Binder) {
 
 	t.Dynamic("method", r.method)
 	t.Dynamic("url", r.url)
+	t.Dynamic("host", r.host)
 	t.Dynamic("query", r.query)
 	t.Dynamic("params", r.params)
 	t.Dynamic("headers", r.requestHeaders)
@@ -134,6 +135,21 @@ func (r *ginContext) url(c *binder.Context) error {
 		c.Push().String(req.Request.URL.String())
 	} else {
 		req.Request.URL, _ = url.Parse(c.Arg(2).String())
+	}
+
+	return nil
+}
+
+func (r *ginContext) host(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ginContext)
+	if !ok {
+		return errContextExpected
+	}
+
+	if c.Top() == 1 {
+		c.Push().String(req.Request.Host)
+	} else {
+		req.Request.Host = c.Arg(2).String()
 	}
 
 	return nil

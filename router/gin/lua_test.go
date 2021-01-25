@@ -28,6 +28,7 @@ func TestHandlerFactory(t *testing.T) {
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
 		req:url(req:url() .. "&more=true")
+		req:host(req:host() .. ".newtld")
 		req:query("extra", "foo")
 		req:body(req:body().."fooooooo")`,
 			},
@@ -38,6 +39,9 @@ func TestHandlerFactory(t *testing.T) {
 		return func(c *gin.Context) {
 			if URL := c.Request.URL.String(); URL != "/some-path/42?extra=foo&id=1&more=true" {
 				t.Errorf("unexpected URL: %s", URL)
+			}
+			if host := c.Request.Host; host != "domain.tld.newtld" {
+				t.Errorf("unexpected Host: %s", host)
 			}
 			if accept := c.Request.Header.Get("Accept"); accept != "application/xml" {
 				t.Errorf("unexpected accept header: %s", accept)
@@ -70,6 +74,7 @@ func TestHandlerFactory(t *testing.T) {
 	engine.GET("/some-path/:id", handler)
 
 	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req.Host = "domain.tld"
 	req.Header.Set("Accept", "application/json")
 	w := httptest.NewRecorder()
 
