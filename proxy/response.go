@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 
@@ -164,6 +165,9 @@ func tableGet(c *binder.Context) error {
 	switch t := data.(type) {
 	case string:
 		c.Push().String(t)
+	case json.Number:
+		n, _ := t.Float64()
+		c.Push().Number(n)
 	case int:
 		c.Push().Number(float64(t))
 	case float64:
@@ -194,6 +198,9 @@ func listGet(c *binder.Context) error {
 	switch t := tab.data[index].(type) {
 	case string:
 		c.Push().String(t)
+	case json.Number:
+		n, _ := t.Float64()
+		c.Push().Number(n)
 	case int:
 		c.Push().Number(float64(t))
 	case float64:
