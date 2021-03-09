@@ -9,5 +9,6 @@ require (
 	github.com/devopsfaith/krakend v0.0.0-20190508174715-902a263bfd62
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/gin-gonic/gin v1.4.0
+	github.com/mattn/go-isatty v0.0.7 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583
 )

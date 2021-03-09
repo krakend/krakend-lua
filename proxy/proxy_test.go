@@ -13,6 +13,7 @@ import (
 
 	lua "github.com/devopsfaith/krakend-lua"
 	"github.com/devopsfaith/krakend/config"
+	"github.com/devopsfaith/krakend/encoding"
 	"github.com/devopsfaith/krakend/logging"
 	"github.com/devopsfaith/krakend/proxy"
 )
@@ -338,4 +339,57 @@ end
 
 	fmt.Println(resp)
 	fmt.Println(buff.String())
+}
+
+func Test_jsonNumber(t *testing.T) {
+	buff := bytes.NewBuffer(make([]byte, 1024))
+	logger, err := logging.NewLogger("ERROR", buff, "pref")
+	if err != nil {
+		t.Error("building the logger:", err.Error())
+		return
+	}
+
+	response := `{"id": 1, "name": "foo", "funny_property": true, "long_name": "foo bar"}`
+	r := map[string]interface{}{}
+	encoding.JSONDecoder(strings.NewReader(response), &r)
+
+	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
+		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+			return &proxy.Response{
+				Data: r,
+				Metadata: proxy.Metadata{
+					Headers: map[string][]string{},
+				},
+			}, nil
+		}, nil
+	})
+
+	prxy, err := ProxyFactory(logger, dummyProxyFactory).New(&config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			ProxyNamespace: map[string]interface{}{
+				"post": `
+local resp = response.load()
+local responseData = resp:data()
+print(responseData:get("id"))
+responseData:set("id", responseData:get("id")+1)
+`,
+			},
+		},
+	})
+
+	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
+
+	resp, err := prxy(context.Background(), &proxy.Request{
+		Method:  "GET",
+		Path:    "/some-path",
+		Params:  map[string]string{"Id": "42"},
+		Headers: map[string][]string{},
+		URL:     URL,
+		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
+	})
+
+	if id, ok := resp.Data["id"].(float64); !ok || id != 2 {
+		t.Errorf("unexpected id %f", id)
+	}
 }
