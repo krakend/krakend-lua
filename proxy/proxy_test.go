@@ -119,6 +119,7 @@ func TestProxyFactory(t *testing.T) {
 					"comment": "some",
 				},
 			},
+			"to_be_removed": 123456,
 		},
 		Metadata: proxy.Metadata{},
 		Io:       strings.NewReader("initial resp content"),
@@ -192,6 +193,7 @@ func TestProxyFactory(t *testing.T) {
 		responseData:set("more", data)
 		local bar = string.find('banana', 'an')
 		responseData:set("bar", bar)
+		responseData:del("to_be_removed")
 
 		resp:headers("Content-Type", "application/xml")
 		resp:statusCode(200)
