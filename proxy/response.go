@@ -16,6 +16,7 @@ func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
 	tab.Dynamic("get", tableGet)
 	tab.Dynamic("set", tableSet)
 	tab.Dynamic("len", tableLen)
+	tab.Dynamic("del", tableDel)
 	list := b.Table("luaList")
 	list.Dynamic("get", listGet)
 	list.Dynamic("set", listSet)
@@ -284,6 +285,18 @@ func listSet(c *binder.Context) error {
 		}
 	}
 
+	return nil
+}
+
+func tableDel(c *binder.Context) error {
+	if c.Top() != 2 {
+		return errNeedsArguments
+	}
+	tab, ok := c.Arg(1).Data().(*luaTable)
+	if !ok {
+		return errResponseExpected
+	}
+	delete(tab.data, c.Arg(2).String())
 	return nil
 }
 
