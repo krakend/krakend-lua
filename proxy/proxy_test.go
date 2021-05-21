@@ -118,6 +118,14 @@ func TestProxyFactory(t *testing.T) {
 					"id":      42,
 					"comment": "some",
 				},
+				map[string]interface{}{
+					"id":      99,
+					"comment": "to be removed",
+				},
+				map[string]interface{}{
+					"id":      0,
+					"comment": "last",
+				},
 			},
 			"to_be_removed": 123456,
 		},
@@ -179,6 +187,10 @@ func TestProxyFactory(t *testing.T) {
 		data["supu"] = {}
 		data["supu"]["tupu"] = "some"
 		data["supu"]["original"] = responseData:get("ok")
+
+		local original_collection = responseData:get("collection")
+		original_collection:del(2)
+		responseData:set("collection", original_collection)
 		local col = responseData:get("collection")
 		data["collection_size"] = col:len()
 
@@ -251,16 +263,21 @@ func TestProxyFactory(t *testing.T) {
 		{
 			"comment": "some",
 			"id": 42
+		},
+		{
+			"comment": "last",
+			"id": 0
 		}
 	],
 	"foo": "some_new_value",
 	"more": {
 		"bar": 120,
-		"collection_size": 2,
+		"collection_size": 3,
 		"foobar": true,
 		"ids": {
 			"1": 1,
-			"2": 42
+			"2": 42,
+			"3": 0
 		},
 		"supu": {
 			"original": true,
