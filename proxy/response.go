@@ -21,6 +21,7 @@ func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
 	list.Dynamic("get", listGet)
 	list.Dynamic("set", listSet)
 	list.Dynamic("len", listLen)
+	list.Dynamic("del", listDel)
 
 	r := &response{resp}
 	if r.Metadata.Headers == nil {
@@ -297,6 +298,28 @@ func tableDel(c *binder.Context) error {
 		return errResponseExpected
 	}
 	delete(tab.data, c.Arg(2).String())
+	return nil
+}
+
+func listDel(c *binder.Context) error {
+	if c.Top() != 2 {
+		return errNeedsArguments
+	}
+	tab, ok := c.Arg(1).Data().(*luaList)
+	if !ok {
+		return errResponseExpected
+	}
+	key := int(c.Arg(2).Number())
+	if key < 0 || key >= len(tab.data) {
+		return nil
+	}
+
+	last := len(tab.data) - 1
+	if key < last {
+		copy(tab.data[key:], tab.data[key+1:])
+	}
+	tab.data[last] = nil
+	tab.data = tab.data[:last]
 	return nil
 }
 
