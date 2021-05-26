@@ -10,11 +10,11 @@ import (
 	"github.com/alexeyco/binder"
 	lua "github.com/devopsfaith/krakend-lua"
 	"github.com/devopsfaith/krakend-lua/router"
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/logging"
-	"github.com/devopsfaith/krakend/proxy"
-	krakendgin "github.com/devopsfaith/krakend/router/gin"
 	"github.com/gin-gonic/gin"
+	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/logging"
+	"github.com/luraproject/lura/proxy"
+	krakendgin "github.com/luraproject/lura/router/gin"
 )
 
 func Register(l logging.Logger, extraConfig config.ExtraConfig, engine *gin.Engine) {
