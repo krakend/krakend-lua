@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	"github.com/alexeyco/binder"
-	"github.com/devopsfaith/krakend/proxy"
+	"github.com/luraproject/lura/proxy"
 )
 
 func registerRequestTable(req *proxy.Request, b *binder.Binder) {

@@ -10,10 +10,10 @@ import (
 	"github.com/alexeyco/binder"
 	lua "github.com/devopsfaith/krakend-lua"
 	"github.com/devopsfaith/krakend-lua/router"
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/logging"
-	"github.com/devopsfaith/krakend/proxy"
-	mux "github.com/devopsfaith/krakend/router/mux"
+	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/logging"
+	"github.com/luraproject/lura/proxy"
+	mux "github.com/luraproject/lura/router/mux"
 )
 
 func RegisterMiddleware(l logging.Logger, e config.ExtraConfig, pe mux.ParamExtractor, mws []mux.HandlerMiddleware) []mux.HandlerMiddleware {
