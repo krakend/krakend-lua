@@ -18,6 +18,7 @@ const (
 
 func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 	return proxy.FactoryFunc(func(remote *config.EndpointConfig) (proxy.Proxy, error) {
+		logPrefix := "[ENDPOINT: " + remote.Endpoint + "][Lua]"
 		next, err := pf.New(remote)
 		if err != nil {
 			return next, err
@@ -25,7 +26,7 @@ func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, ProxyNamespace)
 		if err != nil {
-			l.Debug("lua:", err)
+			l.Debug(logPrefix, err)
 			return next, nil
 		}
 
@@ -35,11 +36,12 @@ func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 
 func BackendFactory(l logging.Logger, bf proxy.BackendFactory) proxy.BackendFactory {
 	return func(remote *config.Backend) proxy.Proxy {
+		logPrefix := "[BACKEND: " + remote.URLPattern + "][Lua]"
 		next := bf(remote)
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, BackendNamespace)
 		if err != nil {
-			l.Debug("lua:", err)
+			l.Debug(logPrefix, err)
 			return next
 		}
 

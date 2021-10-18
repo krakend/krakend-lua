@@ -17,9 +17,10 @@ import (
 )
 
 func RegisterMiddleware(l logging.Logger, e config.ExtraConfig, pe mux.ParamExtractor, mws []mux.HandlerMiddleware) []mux.HandlerMiddleware {
+	logPrefix := "[ENDPOINT: " + e.Endpoint + "][Lua]"
 	cfg, err := lua.Parse(l, e, router.Namespace)
 	if err != nil {
-		l.Debug("lua:", err.Error())
+		l.Debug(logPrefix, err.Error())
 		return mws
 	}
 
@@ -44,11 +45,12 @@ func (hm *middleware) Handler(h http.Handler) http.Handler {
 
 func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtractor) mux.HandlerFactory {
 	return func(remote *config.EndpointConfig, p proxy.Proxy) http.HandlerFunc {
+		logPrefix := "[ENDPOINT: " + config.Endpoint + "][Lua]"
 		handlerFunc := next(remote, p)
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, router.Namespace)
 		if err != nil {
-			l.Debug("lua:", err.Error())
+			l.Debug(logPrefix, err.Error())
 			return handlerFunc
 		}
 
