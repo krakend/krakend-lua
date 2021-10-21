@@ -5,15 +5,15 @@ import (
 	"errors"
 
 	"github.com/alexeyco/binder"
-	lua "github.com/devopsfaith/krakend-lua"
-	"github.com/luraproject/lura/config"
-	"github.com/luraproject/lura/logging"
-	"github.com/luraproject/lura/proxy"
+	lua "github.com/devopsfaith/krakend-lua/v2"
+	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/logging"
+	"github.com/luraproject/lura/v2/proxy"
 )
 
 const (
-	ProxyNamespace   = "github.com/devopsfaith/krakend-lua/proxy"
-	BackendNamespace = "github.com/devopsfaith/krakend-lua/proxy/backend"
+	ProxyNamespace   = "github.com/devopsfaith/krakend-lua/v2/proxy"
+	BackendNamespace = "github.com/devopsfaith/krakend-lua/v2/proxy/backend"
 )
 
 func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {

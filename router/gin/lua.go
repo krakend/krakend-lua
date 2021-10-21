@@ -8,22 +8,26 @@ import (
 	"net/url"
 
 	"github.com/alexeyco/binder"
-	lua "github.com/devopsfaith/krakend-lua"
-	"github.com/devopsfaith/krakend-lua/router"
+	lua "github.com/devopsfaith/krakend-lua/v2"
+	"github.com/devopsfaith/krakend-lua/v2/router"
 	"github.com/gin-gonic/gin"
-	"github.com/luraproject/lura/config"
-	"github.com/luraproject/lura/logging"
-	"github.com/luraproject/lura/proxy"
-	krakendgin "github.com/luraproject/lura/router/gin"
+	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/logging"
+	"github.com/luraproject/lura/v2/proxy"
+	krakendgin "github.com/luraproject/lura/v2/router/gin"
 )
 
 func Register(l logging.Logger, extraConfig config.ExtraConfig, engine *gin.Engine) {
-	logPrefix := "[ENDPOINT: " + extraConfig.Endpoint + "][Lua]"
+	logPrefix := "[Service: Gin][Lua]"
 	cfg, err := lua.Parse(l, extraConfig, router.Namespace)
 	if err != nil {
-		l.Debug(logPrefix, err.Error())
+		if err != lua.ErrNoExtraConfig {
+			l.Debug(logPrefix, err.Error())
+		}
 		return
 	}
+
+	l.Debug(logPrefix, "Middleware is now ready")
 
 	engine.Use(func(c *gin.Context) {
 		if err := process(c, cfg); err != nil {

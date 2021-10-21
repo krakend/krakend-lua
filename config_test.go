@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/luraproject/lura/config"
-	"github.com/luraproject/lura/logging"
+	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/logging"
 )
 
 func TestParse(t *testing.T) {

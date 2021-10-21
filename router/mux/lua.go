@@ -8,21 +8,25 @@ import (
 	"net/url"
 
 	"github.com/alexeyco/binder"
-	lua "github.com/devopsfaith/krakend-lua"
-	"github.com/devopsfaith/krakend-lua/router"
-	"github.com/luraproject/lura/config"
-	"github.com/luraproject/lura/logging"
-	"github.com/luraproject/lura/proxy"
-	mux "github.com/luraproject/lura/router/mux"
+	lua "github.com/devopsfaith/krakend-lua/v2"
+	"github.com/devopsfaith/krakend-lua/v2/router"
+	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/logging"
+	"github.com/luraproject/lura/v2/proxy"
+	mux "github.com/luraproject/lura/v2/router/mux"
 )
 
 func RegisterMiddleware(l logging.Logger, e config.ExtraConfig, pe mux.ParamExtractor, mws []mux.HandlerMiddleware) []mux.HandlerMiddleware {
-	logPrefix := "[ENDPOINT: " + e.Endpoint + "][Lua]"
+	logPrefix := "[Service: Mux][Lua]"
 	cfg, err := lua.Parse(l, e, router.Namespace)
 	if err != nil {
-		l.Debug(logPrefix, err.Error())
+		if err != lua.ErrNoExtraConfig {
+			l.Debug(logPrefix, err.Error())
+		}
 		return mws
 	}
+
+	l.Debug(logPrefix, "Middleware is now ready")
 
 	return append(mws, &middleware{pe: pe, cfg: cfg})
 }
@@ -45,7 +49,7 @@ func (hm *middleware) Handler(h http.Handler) http.Handler {
 
 func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtractor) mux.HandlerFactory {
 	return func(remote *config.EndpointConfig, p proxy.Proxy) http.HandlerFunc {
-		logPrefix := "[ENDPOINT: " + config.Endpoint + "][Lua]"
+		logPrefix := "[ENDPOINT: " + remote.Endpoint + "][Lua]"
 		handlerFunc := next(remote, p)
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, router.Namespace)
