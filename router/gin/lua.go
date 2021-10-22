@@ -46,9 +46,13 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, router.Namespace)
 		if err != nil {
-			l.Debug(logPrefix, err.Error())
+			if err != lua.ErrNoExtraConfig {
+				l.Debug(logPrefix, err.Error())
+			}
 			return handlerFunc
 		}
+
+		l.Debug(logPrefix, "Middleware is now ready")
 
 		return func(c *gin.Context) {
 			if err := process(c, cfg); err != nil {

@@ -54,9 +54,13 @@ func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtra
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, router.Namespace)
 		if err != nil {
-			l.Debug(logPrefix, err.Error())
+			if err != lua.ErrNoExtraConfig {
+				l.Debug(logPrefix, err.Error())
+			}
 			return handlerFunc
 		}
+
+		l.Debug(logPrefix, "Middleware is now ready")
 
 		return func(w http.ResponseWriter, r *http.Request) {
 			if err := process(r, pe, cfg); err != nil {

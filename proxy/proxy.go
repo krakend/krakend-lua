@@ -26,9 +26,13 @@ func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, ProxyNamespace)
 		if err != nil {
-			l.Debug(logPrefix, err)
+			if err != lua.ErrNoExtraConfig {
+				l.Debug(logPrefix, err)
+			}
 			return next, nil
 		}
+
+		l.Debug(logPrefix, "Middleware is now ready")
 
 		return New(cfg, next), nil
 	})
