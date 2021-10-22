@@ -45,7 +45,9 @@ func BackendFactory(l logging.Logger, bf proxy.BackendFactory) proxy.BackendFact
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, BackendNamespace)
 		if err != nil {
-			l.Debug(logPrefix, err)
+			if err != lua.ErrNoExtraConfig {
+				l.Debug(logPrefix, err)
+			}
 			return next
 		}
 
