@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	ProxyNamespace   = "github.com/devopsfaith/krakend-lua/v2/proxy"
-	BackendNamespace = "github.com/devopsfaith/krakend-lua/v2/proxy/backend"
+	ProxyNamespace   = "github.com/devopsfaith/krakend-lua/proxy"
+	BackendNamespace = "github.com/devopsfaith/krakend-lua/proxy/backend"
 )
 
 func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
