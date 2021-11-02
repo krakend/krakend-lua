@@ -73,7 +73,7 @@ func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, er
 	for _, source := range res.Sources {
 		b, err := ioutil.ReadFile(source)
 		if err != nil {
-			l.Error("lua:", err)
+			l.Error("[Lua] Opening the source file", err.Error())
 			continue
 		}
 		loader[source] = string(b)
