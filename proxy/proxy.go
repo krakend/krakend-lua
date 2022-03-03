@@ -5,10 +5,10 @@ import (
 	"errors"
 
 	"github.com/alexeyco/binder"
-	lua "github.com/devopsfaith/krakend-lua"
-	"github.com/luraproject/lura/config"
-	"github.com/luraproject/lura/logging"
-	"github.com/luraproject/lura/proxy"
+	lua "github.com/devopsfaith/krakend-lua/v2"
+	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/logging"
+	"github.com/luraproject/lura/v2/proxy"
 )
 
 const (
@@ -18,6 +18,7 @@ const (
 
 func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 	return proxy.FactoryFunc(func(remote *config.EndpointConfig) (proxy.Proxy, error) {
+		logPrefix := "[ENDPOINT: " + remote.Endpoint + "][Lua]"
 		next, err := pf.New(remote)
 		if err != nil {
 			return next, err
@@ -25,9 +26,13 @@ func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, ProxyNamespace)
 		if err != nil {
-			l.Debug("lua:", err)
+			if err != lua.ErrNoExtraConfig {
+				l.Debug(logPrefix, err)
+			}
 			return next, nil
 		}
+
+		l.Debug(logPrefix, "Middleware is now ready")
 
 		return New(cfg, next), nil
 	})
@@ -35,11 +40,14 @@ func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 
 func BackendFactory(l logging.Logger, bf proxy.BackendFactory) proxy.BackendFactory {
 	return func(remote *config.Backend) proxy.Proxy {
+		logPrefix := "[BACKEND: " + remote.URLPattern + "][Lua]"
 		next := bf(remote)
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, BackendNamespace)
 		if err != nil {
-			l.Debug("lua:", err)
+			if err != lua.ErrNoExtraConfig {
+				l.Debug(logPrefix, err)
+			}
 			return next
 		}
 
@@ -55,7 +63,7 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 		})
 
 		lua.RegisterErrors(b)
-		registerHTTPRequest(b)
+		registerHTTPRequest(ctx, b)
 		registerRequestTable(req, b)
 
 		for _, source := range cfg.Sources {

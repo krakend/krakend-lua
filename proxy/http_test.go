@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -30,7 +31,7 @@ func Example_RegisterBackendModule() {
 		IncludeGoStackTrace: true,
 	})
 
-	registerHTTPRequest(bindr)
+	registerHTTPRequest(context.Background(), bindr)
 
 	code := fmt.Sprintf("local url = '%s'\n%s", ts.URL, sampleLuaCode)
 
@@ -41,21 +42,21 @@ func Example_RegisterBackendModule() {
 	// output:
 	// lua http test
 	//
-	// {"123":["456"],"Accept-Encoding":["gzip"],"Content-Length":["13"],"Foo":["bar"],"User-Agent":["Go-http-client/1.1"]}
+	// {"123":["456"],"Accept-Encoding":["gzip"],"Content-Length":["13"],"Foo":["bar"],"User-Agent":["KrakenD Version undefined"]}
 	// POST
 	// {"foo":"bar"}
 	// 200
 	// text/plain; charset=utf-8
 	// Hello, client
 	//
-	// {"Accept-Encoding":["gzip"],"Content-Length":["13"],"User-Agent":["Go-http-client/1.1"]}
+	// {"Accept-Encoding":["gzip"],"Content-Length":["13"],"User-Agent":["KrakenD Version undefined"]}
 	// POST
 	// {"foo":"bar"}
 	// 200
 	// text/plain; charset=utf-8
 	// Hello, client
 	//
-	// {"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}
+	// {"Accept-Encoding":["gzip"],"User-Agent":["KrakenD Version undefined"]}
 	// GET
 	//
 	// 200
@@ -69,14 +70,17 @@ local r = http_response.new(url, "POST", '{"foo":"bar"}', {["foo"] = "bar", ["12
 print(r:statusCode())
 print(r:headers('Content-Type'))
 print(r:body())
+r:close()
 
 local r = http_response.new(url, "POST", '{"foo":"bar"}')
 print(r:statusCode())
 print(r:headers('Content-Type'))
 print(r:body())
+r:close()
 
 local r = http_response.new(url)
 print(r:statusCode())
 print(r:headers('Content-Type'))
 print(r:body())
+r:close()
 `

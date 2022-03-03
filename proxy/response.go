@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 
 	"github.com/alexeyco/binder"
-	"github.com/luraproject/lura/proxy"
+	"github.com/luraproject/lura/v2/proxy"
 	lua "github.com/yuin/gopher-lua"
 )
 

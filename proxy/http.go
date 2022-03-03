@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -9,60 +10,71 @@ import (
 
 	"github.com/alexeyco/binder"
 	lua "github.com/yuin/gopher-lua"
+
+	"github.com/luraproject/lura/v2/transport/http/server"
 )
 
-func registerHTTPRequest(b *binder.Binder) {
+func registerHTTPRequest(ctx context.Context, b *binder.Binder) {
 	t := b.Table("http_response")
 
-	t.Static("new", newHttpResponse)
+	t.Static("new", newHttpResponse(ctx))
 
 	t.Dynamic("statusCode", httpStatus)
 	t.Dynamic("headers", httpHeaders)
 	t.Dynamic("body", httpBody)
+	t.Dynamic("close", close)
 }
 
-func newHttpResponse(c *binder.Context) error {
-	if c.Top() == 0 || c.Top() == 2 {
-		return errors.New("need 1, 3 or 4 arguments")
-	}
+func newHttpResponse(ctx context.Context) func(*binder.Context) error {
+	return func(c *binder.Context) error {
+		if c.Top() == 0 || c.Top() == 2 {
+			return errors.New("need 1, 3 or 4 arguments")
+		}
 
-	URL := c.Arg(1).String()
-	if c.Top() == 1 {
-		resp, err := http.Get(URL)
+		URL := c.Arg(1).String()
+		var req *http.Request
+
+		if c.Top() == 1 {
+
+			req, _ = http.NewRequest("GET", URL, nil)
+
+		} else {
+
+			method := c.Arg(2).String()
+			body := c.Arg(3).String()
+
+			var err error
+			req, err = http.NewRequest(method, URL, bytes.NewBufferString(body))
+			if err != nil {
+				return err
+			}
+
+			if c.Top() == 4 {
+				headers, ok := c.Arg(4).Any().(*lua.LTable)
+
+				if ok {
+					headers.ForEach(func(key, value lua.LValue) {
+						req.Header.Add(key.String(), value.String())
+					})
+				}
+			}
+		}
+
+		resp, err := executeHttpRequest(req.WithContext(ctx))
 		if err != nil {
 			return err
+		}
+		if resp == nil {
+			return errResponseExpected
 		}
 		pushHTTPResponse(c, resp)
 		return nil
 	}
+}
 
-	method := c.Arg(2).String()
-	body := c.Arg(3).String()
-
-	req, err := http.NewRequest(method, URL, bytes.NewBufferString(body))
-	if err != nil {
-		return err
-	}
-
-	if c.Top() == 4 {
-		headers, ok := c.Arg(4).Any().(*lua.LTable)
-
-		if ok {
-			headers.ForEach(func(key, value lua.LValue) {
-				req.Header.Add(key.String(), value.String())
-			})
-		}
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	if resp == nil {
-		return errResponseExpected
-	}
-	pushHTTPResponse(c, resp)
-	return nil
+func executeHttpRequest(r *http.Request) (*http.Response, error) {
+	r.Header.Add("User-Agent", server.UserAgentHeaderValue[0])
+	return http.DefaultClient.Do(r)
 }
 
 type httpResponse struct {
@@ -71,10 +83,19 @@ type httpResponse struct {
 	body string
 }
 
+func (h *httpResponse) Close() {
+	if h == nil || h.r == nil || h.r.Body == nil {
+		return
+	}
+
+	h.r.Body.Close()
+	h.r.Body = nil
+}
+
 func (h *httpResponse) Body() string {
 	h.once.Do(func() {
 		b, _ := ioutil.ReadAll(h.r.Body)
-		h.r.Body.Close()
+		h.Close()
 		h.body = string(b)
 	})
 	return h.body
@@ -124,5 +145,19 @@ func httpBody(c *binder.Context) error {
 	}
 	c.Push().String(resp.Body())
 
+	return nil
+}
+
+func close(c *binder.Context) error {
+	resp, ok := c.Arg(1).Data().(*httpResponse)
+	if !ok {
+		return errResponseExpected
+	}
+	if resp == nil {
+		return nil
+	}
+	resp.Close()
+	resp.r = nil
+	resp = nil
 	return nil
 }
