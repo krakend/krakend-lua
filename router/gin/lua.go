@@ -30,7 +30,7 @@ func Register(l logging.Logger, extraConfig config.ExtraConfig, engine *gin.Engi
 	l.Debug(logPrefix, "Middleware is now ready")
 
 	engine.Use(func(c *gin.Context) {
-		if err := process(c, cfg); err != nil {
+		if err := process(c, &cfg); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
@@ -55,7 +55,7 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 		l.Debug(logPrefix, "Middleware is now ready")
 
 		return func(c *gin.Context) {
-			if err := process(c, cfg); err != nil {
+			if err := process(c, &cfg); err != nil {
 				err = lua.ToError(err)
 				if errhttp, ok := err.(errHTTP); ok {
 					c.AbortWithError(errhttp.StatusCode(), err)
@@ -75,7 +75,7 @@ type errHTTP interface {
 	StatusCode() int
 }
 
-func process(c *gin.Context, cfg lua.Config) error {
+func process(c *gin.Context, cfg *lua.Config) error {
 	b := binder.New(binder.Options{
 		SkipOpenLibs:        !cfg.AllowOpenLibs,
 		IncludeGoStackTrace: true,
