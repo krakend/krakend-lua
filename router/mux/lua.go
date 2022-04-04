@@ -182,27 +182,7 @@ func (r *muxContext) query(c *binder.Context) error {
 	return nil
 }
 
-func (r *muxContext) params(c *binder.Context) error {
-	// req, ok := c.Arg(1).Data().(*muxContext)
-	// if !ok {
-	// 	return errContextExpected
-	// }
-	// switch c.Top() {
-	// case 1:
-	// 	return errNeedsArguments
-	// case 2:
-	// 	c.Push().String(req.Params.ByName(c.Arg(2).String()))
-	// case 3:
-	// 	key := c.Arg(2).String()
-	// 	for i, p := range req.Params {
-	// 		if p.Key == key {
-	// 			req.Params[i].Value = c.Arg(3).String()
-	// 			return nil
-	// 		}
-	// 	}
-	// 	req.Params = append(req.Params, gin.Param{Key: c.Arg(2).String(), Value: c.Arg(3).String()})
-	// }
-
+func (r *muxContext) params(_ *binder.Context) error {
 	return nil
 }
 
