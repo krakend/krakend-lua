@@ -22,7 +22,7 @@ func registerHTTPRequest(ctx context.Context, b *binder.Binder) {
 	t.Dynamic("statusCode", httpStatus)
 	t.Dynamic("headers", httpHeaders)
 	t.Dynamic("body", httpBody)
-	t.Dynamic("close", close)
+	t.Dynamic("close", httpClose)
 }
 
 func newHttpResponse(ctx context.Context) func(*binder.Context) error {
@@ -148,7 +148,7 @@ func httpBody(c *binder.Context) error {
 	return nil
 }
 
-func close(c *binder.Context) error {
+func httpClose(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*httpResponse)
 	if !ok {
 		return errResponseExpected
