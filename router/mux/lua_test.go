@@ -40,7 +40,7 @@ func TestHandlerFactory(t *testing.T) {
 			if accept := r.Header.Get("Accept"); accept != "application/xml" {
 				t.Errorf("unexpected accept header: %s", accept)
 			}
-			if "POST" != r.Method {
+			if r.Method != "POST" {
 				t.Errorf("unexpected method: %s", r.Method)
 			}
 			if e := r.URL.Query().Get("extra"); e != "foo" {
@@ -57,7 +57,7 @@ func TestHandlerFactory(t *testing.T) {
 				t.Error(err)
 				return
 			}
-			if "fooooooo" != string(b) {
+			if string(b) != "fooooooo" {
 				t.Errorf("unexpected body: %s", string(b))
 			}
 		}

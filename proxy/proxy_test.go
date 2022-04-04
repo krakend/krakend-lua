@@ -155,7 +155,7 @@ func TestProxyFactory(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			if "initial req content foo" != string(b) {
+			if string(b) != "initial req content foo" {
 				t.Errorf("unexpected body: %s", string(b))
 			}
 			return expectedResponse, nil
@@ -302,7 +302,7 @@ func TestProxyFactory(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if "initial resp content bar" != string(b) {
+	if string(b) != "initial resp content bar" {
 		t.Errorf("unexpected body: %s", string(b))
 	}
 }
