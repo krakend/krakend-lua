@@ -34,6 +34,10 @@ func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statu
 		return
 	}
 
+	if err != nil {
+		t.Error(err)
+	}
+
 	unexpectedErr := errors.New("never seen")
 
 	explosive := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
@@ -50,6 +54,10 @@ func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statu
 			},
 		},
 	})
+
+	if err != nil {
+		t.Error(err)
+	}
 
 	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
 
@@ -214,6 +222,10 @@ func TestProxyFactory(t *testing.T) {
 		},
 	})
 
+	if err != nil {
+		t.Error(err)
+	}
+
 	resp, err := prxy(context.Background(), &proxy.Request{
 		Method:  "GET",
 		Path:    "/some-path",
@@ -332,22 +344,35 @@ func Test_Issue7(t *testing.T) {
 		ExtraConfig: config.ExtraConfig{
 			ProxyNamespace: map[string]interface{}{
 				"post": `
-local resp = response.load()
-local responseData = resp:data()
+	local resp = response.load()
+	local responseData = resp:data()
+	local data = {}
+	local col = responseData:get("items")
 
-for key, value in pairs(responseData:get("items")) do
-    print(key, " -- ", value)
-end
+	local size = col:len()
+	responseData:set("total", size)
 
+	local names = {}
+	for i=0,size-1 do
+		local element = col:get(i)
+		local t = element:get("long_name")
+		table.insert(names, t)
+	end
 
+	responseData:set("names", names)
+	responseData:del("items")
 `,
 			},
 		},
 	})
 
+	if err != nil {
+		t.Error(err)
+	}
+
 	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
 
-	resp, err := prxy(context.Background(), &proxy.Request{
+	_, err = prxy(context.Background(), &proxy.Request{
 		Method:  "GET",
 		Path:    "/some-path",
 		Params:  map[string]string{"Id": "42"},
@@ -356,7 +381,10 @@ end
 		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
 	})
 
-	fmt.Println(resp)
+	if err != nil {
+		t.Error(err)
+	}
+
 	fmt.Println(buff.String())
 }
 
@@ -396,6 +424,10 @@ responseData:set("id", responseData:get("id")+1)
 			},
 		},
 	})
+
+	if err != nil {
+		t.Error(err)
+	}
 
 	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
 
