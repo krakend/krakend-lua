@@ -35,7 +35,7 @@ type request struct {
 
 var errRequestExpected = errors.New("request expected")
 
-func (r *request) method(c *binder.Context) error {
+func (*request) method(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*request)
 	if !ok {
 		return errRequestExpected
@@ -50,7 +50,7 @@ func (r *request) method(c *binder.Context) error {
 	return nil
 }
 
-func (r *request) path(c *binder.Context) error {
+func (*request) path(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*request)
 	if !ok {
 		return errRequestExpected
@@ -65,7 +65,7 @@ func (r *request) path(c *binder.Context) error {
 	return nil
 }
 
-func (r *request) query(c *binder.Context) error {
+func (*request) query(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*request)
 	if !ok {
 		return errRequestExpected
@@ -80,7 +80,7 @@ func (r *request) query(c *binder.Context) error {
 	return nil
 }
 
-func (r *request) url(c *binder.Context) error {
+func (*request) url(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*request)
 	if !ok {
 		return errRequestExpected
@@ -95,7 +95,7 @@ func (r *request) url(c *binder.Context) error {
 	return nil
 }
 
-func (r *request) params(c *binder.Context) error {
+func (*request) params(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*request)
 	if !ok {
 		return errRequestExpected
@@ -112,7 +112,7 @@ func (r *request) params(c *binder.Context) error {
 	return nil
 }
 
-func (r *request) headers(c *binder.Context) error {
+func (*request) headers(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*request)
 	if !ok {
 		return errRequestExpected
@@ -134,7 +134,7 @@ func (r *request) headers(c *binder.Context) error {
 	return nil
 }
 
-func (r *request) body(c *binder.Context) error {
+func (*request) body(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*request)
 	if !ok {
 		return errRequestExpected

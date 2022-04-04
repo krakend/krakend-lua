@@ -52,7 +52,7 @@ type response struct {
 
 var errResponseExpected = errors.New("response expected")
 
-func (r *response) isComplete(c *binder.Context) error {
+func (*response) isComplete(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*response)
 	if !ok {
 		return errResponseExpected
@@ -67,7 +67,7 @@ func (r *response) isComplete(c *binder.Context) error {
 	return nil
 }
 
-func (r *response) statusCode(c *binder.Context) error {
+func (*response) statusCode(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*response)
 	if !ok {
 		return errResponseExpected
@@ -82,7 +82,7 @@ func (r *response) statusCode(c *binder.Context) error {
 	return nil
 }
 
-func (r *response) headers(c *binder.Context) error {
+func (*response) headers(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*response)
 	if !ok {
 		return errResponseExpected
@@ -104,7 +104,7 @@ func (r *response) headers(c *binder.Context) error {
 	return nil
 }
 
-func (r *response) body(c *binder.Context) error {
+func (*response) body(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*response)
 	if !ok {
 		return errResponseExpected
@@ -125,7 +125,7 @@ func (r *response) body(c *binder.Context) error {
 	return nil
 }
 
-func (r *response) data(c *binder.Context) error {
+func (*response) data(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*response)
 	if !ok {
 		return errResponseExpected
