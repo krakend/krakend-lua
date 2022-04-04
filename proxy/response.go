@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/alexeyco/binder"
@@ -180,6 +181,8 @@ func tableGet(c *binder.Context) error {
 		c.Push().Data(&luaList{data: t}, "luaList")
 	case map[string]interface{}:
 		c.Push().Data(&luaTable{data: t}, "luaTable")
+	default:
+		return fmt.Errorf("unknown type (%T) %v", t, t)
 	}
 
 	return nil
