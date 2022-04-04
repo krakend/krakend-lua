@@ -52,7 +52,7 @@ func (e ErrInternalHTTP) Error() string {
 
 func ToError(e error) error {
 	if e == nil {
-		return e
+		return nil
 	}
 
 	if _, ok := e.(*binder.Error); !ok {
