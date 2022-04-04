@@ -120,7 +120,7 @@ type ginContext struct {
 	*gin.Context
 }
 
-func (r *ginContext) method(c *binder.Context) error {
+func (*ginContext) method(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*ginContext)
 	if !ok {
 		return errContextExpected
@@ -135,7 +135,7 @@ func (r *ginContext) method(c *binder.Context) error {
 	return nil
 }
 
-func (r *ginContext) url(c *binder.Context) error {
+func (*ginContext) url(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*ginContext)
 	if !ok {
 		return errContextExpected
@@ -150,7 +150,7 @@ func (r *ginContext) url(c *binder.Context) error {
 	return nil
 }
 
-func (r *ginContext) host(c *binder.Context) error {
+func (*ginContext) host(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*ginContext)
 	if !ok {
 		return errContextExpected
@@ -165,7 +165,7 @@ func (r *ginContext) host(c *binder.Context) error {
 	return nil
 }
 
-func (r *ginContext) query(c *binder.Context) error {
+func (*ginContext) query(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*ginContext)
 	if !ok {
 		return errContextExpected
@@ -185,7 +185,7 @@ func (r *ginContext) query(c *binder.Context) error {
 	return nil
 }
 
-func (r *ginContext) params(c *binder.Context) error {
+func (*ginContext) params(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*ginContext)
 	if !ok {
 		return errContextExpected
@@ -209,7 +209,7 @@ func (r *ginContext) params(c *binder.Context) error {
 	return nil
 }
 
-func (r *ginContext) requestHeaders(c *binder.Context) error {
+func (*ginContext) requestHeaders(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*ginContext)
 	if !ok {
 		return errContextExpected
@@ -226,7 +226,7 @@ func (r *ginContext) requestHeaders(c *binder.Context) error {
 	return nil
 }
 
-func (r *ginContext) requestBody(c *binder.Context) error {
+func (*ginContext) requestBody(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*ginContext)
 	if !ok {
 		return errContextExpected

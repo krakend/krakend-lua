@@ -64,7 +64,7 @@ func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, er
 	}
 
 	if b, ok := c["live"].(bool); ok && b {
-		res.SourceLoader = new(liveLoader)
+		res.SourceLoader = liveLoader{}
 		return res, nil
 	}
 
@@ -117,7 +117,7 @@ func (o onceLoader) Get(k string) (string, bool) {
 
 type liveLoader struct{}
 
-func (l *liveLoader) Get(k string) (string, bool) {
+func (liveLoader) Get(k string) (string, bool) {
 	b, err := ioutil.ReadFile(k)
 	if err != nil {
 		return "", false

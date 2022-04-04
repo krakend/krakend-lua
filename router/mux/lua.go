@@ -132,7 +132,7 @@ type muxContext struct {
 	pe mux.ParamExtractor
 }
 
-func (r *muxContext) method(c *binder.Context) error {
+func (*muxContext) method(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*muxContext)
 	if !ok {
 		return errContextExpected
@@ -147,7 +147,7 @@ func (r *muxContext) method(c *binder.Context) error {
 	return nil
 }
 
-func (r *muxContext) url(c *binder.Context) error {
+func (*muxContext) url(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*muxContext)
 	if !ok {
 		return errContextExpected
@@ -162,7 +162,7 @@ func (r *muxContext) url(c *binder.Context) error {
 	return nil
 }
 
-func (r *muxContext) query(c *binder.Context) error {
+func (*muxContext) query(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*muxContext)
 	if !ok {
 		return errContextExpected
@@ -182,11 +182,11 @@ func (r *muxContext) query(c *binder.Context) error {
 	return nil
 }
 
-func (r *muxContext) params(_ *binder.Context) error {
+func (*muxContext) params(_ *binder.Context) error {
 	return nil
 }
 
-func (r *muxContext) headers(c *binder.Context) error {
+func (*muxContext) headers(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*muxContext)
 	if !ok {
 		return errContextExpected
@@ -203,7 +203,7 @@ func (r *muxContext) headers(c *binder.Context) error {
 	return nil
 }
 
-func (r *muxContext) body(c *binder.Context) error {
+func (*muxContext) body(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*muxContext)
 	if !ok {
 		return errContextExpected
