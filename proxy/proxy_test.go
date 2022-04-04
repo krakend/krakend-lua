@@ -34,10 +34,6 @@ func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statu
 		return
 	}
 
-	if err != nil {
-		t.Error(err)
-	}
-
 	unexpectedErr := errors.New("never seen")
 
 	explosive := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
@@ -439,6 +435,10 @@ responseData:set("id", responseData:get("id")+1)
 		URL:     URL,
 		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
 	})
+
+	if err != nil {
+		t.Error(err)
+	}
 
 	if id, ok := resp.Data["id"].(float64); !ok || id != 2 {
 		t.Errorf("unexpected id %f", id)

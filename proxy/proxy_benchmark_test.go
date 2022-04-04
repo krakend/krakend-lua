@@ -66,6 +66,10 @@ func BenchmarkProxyFactory(b *testing.B) {
 		},
 	})
 
+	if err != nil {
+		b.Error(err)
+	}
+
 	var resp *proxy.Response
 
 	b.ResetTimer()
