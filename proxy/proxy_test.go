@@ -72,13 +72,13 @@ func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statu
 		return
 	}
 
-	switch err.(type) {
+	switch err := err.(type) {
 	case lua.ErrInternalHTTP:
 		if !isHTTP {
 			t.Errorf("unexpected http error: %v (%T)", err, err)
 			return
 		}
-		if sc := err.(lua.ErrInternalHTTP).StatusCode(); sc != statusCode {
+		if sc := err.StatusCode(); sc != statusCode {
 			t.Errorf("unexpected http status code: %d", sc)
 			return
 		}
