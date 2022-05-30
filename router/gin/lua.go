@@ -8,9 +8,9 @@ import (
 	"net/url"
 
 	"github.com/alexeyco/binder"
-	lua "github.com/devopsfaith/krakend-lua/v2"
-	"github.com/devopsfaith/krakend-lua/v2/router"
 	"github.com/gin-gonic/gin"
+	lua "github.com/krakendio/krakend-lua/v2"
+	"github.com/krakendio/krakend-lua/v2/router"
 	"github.com/luraproject/lura/v2/config"
 	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"

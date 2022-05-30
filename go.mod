@@ -1,4 +1,4 @@
-module github.com/devopsfaith/krakend-lua/v2
+module github.com/krakendio/krakend-lua/v2
 
 go 1.17
 
