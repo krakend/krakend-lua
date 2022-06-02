@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io/ioutil"
+	"net/textproto"
 	"net/url"
 
 	"github.com/alexeyco/binder"
@@ -121,14 +122,16 @@ func (*request) headers(c *binder.Context) error {
 	case 1:
 		return errNeedsArguments
 	case 2:
-		headers := req.Headers[c.Arg(2).String()]
+		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
+		headers := req.Headers[key]
 		if len(headers) == 0 {
 			c.Push().String("")
 		} else {
 			c.Push().String(headers[0])
 		}
 	case 3:
-		req.Headers[c.Arg(2).String()] = []string{c.Arg(3).String()}
+		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
+		req.Headers[key] = []string{c.Arg(3).String()}
 	}
 
 	return nil
