@@ -1,10 +1,6 @@
 version = 1
 
 [[analyzers]]
-name = "shell"
-enabled = true
-
-[[analyzers]]
 name = "go"
 enabled = true
 
