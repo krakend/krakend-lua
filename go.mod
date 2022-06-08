@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/alexeyco/binder v0.0.0-20180729220023-2a21303f588a
 	github.com/gin-gonic/gin v1.7.7
-	github.com/luraproject/lura/v2 v2.0.0-20220601150625-abb94fb9730d
+	github.com/luraproject/lura/v2 v2.0.5
 	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583
 )
 
@@ -20,7 +20,7 @@ require (
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/krakendio/flatmap v0.0.0-20220531185225-4cb0ad6fbedd // indirect
+	github.com/krakendio/flatmap v1.1.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
