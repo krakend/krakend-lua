@@ -26,6 +26,10 @@ func TestProxyFactory_errorHTTP(t *testing.T) {
 	testProxyFactoryError(t, `custom_error('expect me', 404)`, "expect me", true, 404)
 }
 
+func TestProxyFactory_errorHTTPJson(t *testing.T) {
+	testProxyFactoryError(t, `custom_error('{"msg":"expect me"}', 404)`, `{"msg":"expect me"}`, true, 404)
+}
+
 func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statusCode int) {
 	buff := bytes.NewBuffer(make([]byte, 1024))
 	logger, err := logging.NewLogger("ERROR", buff, "pref")
