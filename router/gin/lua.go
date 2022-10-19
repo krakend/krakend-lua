@@ -18,7 +18,7 @@ import (
 )
 
 func Register(l logging.Logger, extraConfig config.ExtraConfig, engine *gin.Engine) {
-	logPrefix := "[Service: Gin][Lua]"
+	logPrefix := "[SERVICE: Gin][Lua]"
 	cfg, err := lua.Parse(l, extraConfig, router.Namespace)
 	if err != nil {
 		if err != lua.ErrNoExtraConfig {
