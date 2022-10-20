@@ -3,7 +3,7 @@ package gin
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -233,16 +233,16 @@ func (*ginContext) requestBody(c *binder.Context) error {
 	}
 
 	if c.Top() == 2 {
-		req.Request.Body = ioutil.NopCloser(bytes.NewBufferString(c.Arg(2).String()))
+		req.Request.Body = io.NopCloser(bytes.NewBufferString(c.Arg(2).String()))
 		return nil
 	}
 
 	var b []byte
 	if req.Request.Body != nil {
-		b, _ = ioutil.ReadAll(req.Request.Body)
+		b, _ = io.ReadAll(req.Request.Body)
 		req.Request.Body.Close()
 	}
-	req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+	req.Request.Body = io.NopCloser(bytes.NewBuffer(b))
 	c.Push().String(string(b))
 
 	return nil
