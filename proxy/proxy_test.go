@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"strings"
 	"testing"
@@ -24,6 +24,10 @@ func TestProxyFactory_error(t *testing.T) {
 
 func TestProxyFactory_errorHTTP(t *testing.T) {
 	testProxyFactoryError(t, `custom_error('expect me', 404)`, "expect me", true, 404)
+}
+
+func TestProxyFactory_errorHTTPJson(t *testing.T) {
+	testProxyFactoryError(t, `custom_error('{"msg":"expect me"}', 404)`, `{"msg":"expect me"}`, true, 404)
 }
 
 func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statusCode int) {
@@ -63,7 +67,7 @@ func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statu
 		Params:  map[string]string{"Id": "42"},
 		Headers: map[string][]string{},
 		URL:     URL,
-		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
+		Body:    io.NopCloser(strings.NewReader("initial req content")),
 	})
 
 	if resp != nil {
@@ -151,7 +155,7 @@ func TestProxyFactory(t *testing.T) {
 			if req.URL.String() != "https://some.host.tld/path/to/resource?and=querystring&more=true" {
 				t.Errorf("unexpected URL: %s", req.URL.String())
 			}
-			b, err := ioutil.ReadAll(req.Body)
+			b, err := io.ReadAll(req.Body)
 			if err != nil {
 				t.Error(err)
 			}
@@ -228,7 +232,7 @@ func TestProxyFactory(t *testing.T) {
 		Params:  map[string]string{"Id": "42"},
 		Headers: map[string][]string{},
 		URL:     URL,
-		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
+		Body:    io.NopCloser(strings.NewReader("initial req content")),
 	})
 	if err != nil {
 		t.Errorf("unexpected error %s", err.Error())
@@ -298,7 +302,7 @@ func TestProxyFactory(t *testing.T) {
 		t.Errorf("unexpected response %s", string(b))
 	}
 
-	b, err = ioutil.ReadAll(resp.Io)
+	b, err = io.ReadAll(resp.Io)
 	if err != nil {
 		t.Error(err)
 	}
@@ -374,7 +378,7 @@ func Test_Issue7(t *testing.T) {
 		Params:  map[string]string{"Id": "42"},
 		Headers: map[string][]string{},
 		URL:     URL,
-		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
+		Body:    io.NopCloser(strings.NewReader("initial req content")),
 	})
 
 	if err != nil {
@@ -433,7 +437,7 @@ responseData:set("id", responseData:get("id")+1)
 		Params:  map[string]string{"Id": "42"},
 		Headers: map[string][]string{},
 		URL:     URL,
-		Body:    ioutil.NopCloser(strings.NewReader("initial req content")),
+		Body:    io.NopCloser(strings.NewReader("initial req content")),
 	})
 
 	if err != nil {
