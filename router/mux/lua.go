@@ -3,7 +3,7 @@ package mux
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -210,16 +210,16 @@ func (*muxContext) body(c *binder.Context) error {
 	}
 
 	if c.Top() == 2 {
-		req.Body = ioutil.NopCloser(bytes.NewBufferString(c.Arg(2).String()))
+		req.Body = io.NopCloser(bytes.NewBufferString(c.Arg(2).String()))
 		return nil
 	}
 
 	var b []byte
 	if req.Body != nil {
-		b, _ = ioutil.ReadAll(req.Body)
+		b, _ = io.ReadAll(req.Body)
 		req.Body.Close()
 	}
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+	req.Body = io.NopCloser(bytes.NewBuffer(b))
 	c.Push().String(string(b))
 
 	return nil

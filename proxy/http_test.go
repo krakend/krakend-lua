@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 
@@ -18,7 +18,7 @@ func Example_RegisterBackendModule() {
 		fmt.Println(r.Method)
 
 		if r.Body != nil {
-			body, _ := ioutil.ReadAll(r.Body)
+			body, _ := io.ReadAll(r.Body)
 			fmt.Println(string(body))
 			r.Body.Close()
 		}
