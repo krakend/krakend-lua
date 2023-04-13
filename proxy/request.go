@@ -3,11 +3,11 @@ package proxy
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/textproto"
 	"net/url"
 
-	"github.com/alexeyco/binder"
+	"github.com/krakendio/binder"
 	"github.com/luraproject/lura/v2/proxy"
 )
 
@@ -144,16 +144,16 @@ func (*request) body(c *binder.Context) error {
 	}
 
 	if c.Top() == 2 {
-		req.Body = ioutil.NopCloser(bytes.NewBufferString(c.Arg(2).String()))
+		req.Body = io.NopCloser(bytes.NewBufferString(c.Arg(2).String()))
 		return nil
 	}
 
 	var b []byte
 	if req.Body != nil {
-		b, _ = ioutil.ReadAll(req.Body)
+		b, _ = io.ReadAll(req.Body)
 		req.Body.Close()
 	}
-	req.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+	req.Body = io.NopCloser(bytes.NewBuffer(b))
 	c.Push().String(string(b))
 
 	return nil

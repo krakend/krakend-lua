@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 
-	"github.com/alexeyco/binder"
+	"github.com/krakendio/binder"
 	"github.com/luraproject/lura/v2/proxy"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -117,7 +117,7 @@ func (*response) body(c *binder.Context) error {
 
 	var b []byte
 	if resp.Io != nil {
-		b, _ = ioutil.ReadAll(resp.Io)
+		b, _ = io.ReadAll(resp.Io)
 	}
 	resp.Io = bytes.NewBuffer(b)
 	c.Push().String(string(b))

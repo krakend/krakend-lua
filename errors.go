@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alexeyco/binder"
+	"github.com/krakendio/binder"
 )
 
 type ErrWrongChecksumType string

@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 
-	"github.com/alexeyco/binder"
+	"github.com/krakendio/binder"
 	lua "github.com/yuin/gopher-lua"
 
 	"github.com/luraproject/lura/v2/transport/http/server"
@@ -36,7 +36,7 @@ func newHttpResponse(ctx context.Context) func(*binder.Context) error {
 
 		if c.Top() == 1 {
 
-			req, _ = http.NewRequest("GET", URL, nil)
+			req, _ = http.NewRequest("GET", URL, http.NoBody)
 
 		} else {
 
@@ -94,7 +94,7 @@ func (h *httpResponse) Close() {
 
 func (h *httpResponse) Body() string {
 	h.once.Do(func() {
-		b, _ := ioutil.ReadAll(h.r.Body)
+		b, _ := io.ReadAll(h.r.Body)
 		h.Close()
 		h.body = string(b)
 	})
