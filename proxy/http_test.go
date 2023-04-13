@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/alexeyco/binder"
+	"github.com/krakendio/binder"
 )
 
 func Example_RegisterBackendModule() {

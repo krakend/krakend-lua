@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/alexeyco/binder"
+	"github.com/krakendio/binder"
 	lua "github.com/krakendio/krakend-lua/v2"
 	"github.com/krakendio/krakend-lua/v2/router"
 	"github.com/luraproject/lura/v2/config"

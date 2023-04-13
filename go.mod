@@ -3,8 +3,8 @@ module github.com/krakendio/krakend-lua/v2
 go 1.17
 
 require (
-	github.com/alexeyco/binder v0.0.0-20180729220023-2a21303f588a
 	github.com/gin-gonic/gin v1.7.7
+	github.com/krakendio/binder v0.0.0-20230413105421-1bbe94e65f45
 	github.com/luraproject/lura/v2 v2.0.5
 	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583
 )
@@ -29,11 +29,8 @@ require (
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/valyala/fastrand v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211004093028-2c5d950f24ef // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-
-replace github.com/alexeyco/binder v0.0.0-20180729220023-2a21303f588a => github.com/kpacha/binder v0.0.0-20220707194437-6013d1173c4d

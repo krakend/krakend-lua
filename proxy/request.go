@@ -7,7 +7,7 @@ import (
 	"net/textproto"
 	"net/url"
 
-	"github.com/alexeyco/binder"
+	"github.com/krakendio/binder"
 	"github.com/luraproject/lura/v2/proxy"
 )
 

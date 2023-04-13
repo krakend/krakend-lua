@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/alexeyco/binder"
+	"github.com/krakendio/binder"
 	lua "github.com/yuin/gopher-lua"
 
 	"github.com/luraproject/lura/v2/transport/http/server"
