@@ -87,12 +87,17 @@ func (*request) url(c *binder.Context) error {
 		return errRequestExpected
 	}
 
-	if c.Top() == 1 {
-		c.Push().String(req.URL.String())
-	} else {
+	if c.Top() > 1 {
 		req.URL, _ = url.Parse(c.Arg(2).String())
+		return nil
 	}
 
+	if req.URL == nil {
+		c.Push().String("")
+		return nil
+	}
+
+	c.Push().String(req.URL.String())
 	return nil
 }
 
