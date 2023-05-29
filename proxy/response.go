@@ -14,11 +14,20 @@ import (
 
 func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
 	tab := b.Table("luaTable")
+	tab.Static("new", func(c *binder.Context) error {
+		c.Push().Data(&luaTable{data: map[string]interface{}{}}, "luaTable")
+		return nil
+	})
 	tab.Dynamic("get", tableGet)
 	tab.Dynamic("set", tableSet)
 	tab.Dynamic("len", tableLen)
 	tab.Dynamic("del", tableDel)
+
 	list := b.Table("luaList")
+	list.Static("new", func(c *binder.Context) error {
+		c.Push().Data(&luaList{data: []interface{}{}}, "luaList")
+		return nil
+	})
 	list.Dynamic("get", listGet)
 	list.Dynamic("set", listSet)
 	list.Dynamic("len", listLen)
