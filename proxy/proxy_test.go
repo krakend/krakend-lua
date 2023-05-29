@@ -213,6 +213,7 @@ func TestProxyFactory(t *testing.T) {
 		responseData:set("more", data)
 		local bar = string.find('banana', 'an')
 		responseData:set("bar", bar)
+		responseData:set("keys", responseData:keys())
 		responseData:del("to_be_removed")
 
 		resp:headers("Content-Type", "application/xml")
@@ -282,6 +283,14 @@ func TestProxyFactory(t *testing.T) {
 		}
 	],
 	"foo": "some_new_value",
+	"keys": [
+		"bar",
+		"collection",
+		"foo",
+		"more",
+		"ok",
+		"to_be_removed"
+	],
 	"more": {
 		"bar": 120,
 		"collection_size": 3,

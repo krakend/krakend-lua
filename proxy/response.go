@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
 
 	"github.com/krakendio/binder"
 	"github.com/luraproject/lura/v2/proxy"
@@ -22,8 +23,9 @@ func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
 	tab.Dynamic("set", tableSet)
 	tab.Dynamic("len", tableLen)
 	tab.Dynamic("del", tableDel)
+	tab.Dynamic("keys", tableKeys)
 
-	list := b.Table("luaList")
+  list := b.Table("luaList")
 	list.Static("new", func(c *binder.Context) error {
 		c.Push().Data(&luaList{data: []interface{}{}}, "luaList")
 		return nil
@@ -141,6 +143,24 @@ func (*response) data(c *binder.Context) error {
 	}
 	c.Push().Data(&luaTable{data: resp.Data}, "luaTable")
 
+	return nil
+}
+
+func tableKeys(c *binder.Context) error {
+	tab, ok := c.Arg(1).Data().(*luaTable)
+	if !ok {
+		return errResponseExpected
+	}
+	var l []string
+	for k := range tab.data {
+		l = append(l, k)
+	}
+	sort.Strings(l)
+	keys := make([]interface{}, len(l))
+	for k, v := range l {
+		keys[k] = v
+	}
+	c.Push().Data(&luaList{data: keys}, "luaList")
 	return nil
 }
 
