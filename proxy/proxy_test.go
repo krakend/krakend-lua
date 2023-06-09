@@ -457,3 +457,94 @@ responseData:set("id", responseData:get("id")+1)
 		t.Errorf("unexpected id %f", id)
 	}
 }
+
+func Test_keyValConverter(t *testing.T) {
+	buff := bytes.NewBuffer(make([]byte, 1024))
+	logger, err := logging.NewLogger("ERROR", buff, "pref")
+	if err != nil {
+		t.Error("building the logger:", err.Error())
+		return
+	}
+
+	response := `
+    { "data": [
+        {"key": "name",
+         "value": "Impala"
+        },
+        {"key": "IBU",
+         "value": null
+        },
+        {"key": "type",
+         "value": "IPA"
+        }
+    ]}
+`
+	r := map[string]interface{}{}
+	encoding.JSONDecoder(strings.NewReader(response), &r)
+
+	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
+		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+			return &proxy.Response{
+				Data: r,
+				Metadata: proxy.Metadata{
+					Headers: map[string][]string{},
+				},
+			}, nil
+		}, nil
+	})
+
+	prxy, err := ProxyFactory(logger, dummyProxyFactory).New(&config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			ProxyNamespace: map[string]interface{}{
+				"post": `
+local responseData = resp:data()
+local formated = luaTable.new()
+local items = responseData:get("data"):get(0)
+
+local size = items:len()
+
+if size > 0 then
+    for i=0,size-1 do
+        local element = items:get(i)
+        local key = element:get("key")
+        local value = element:get("value")
+        formated:set(key, value)
+    end
+end
+`,
+			},
+		},
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
+
+	resp, err := prxy(context.Background(), &proxy.Request{
+		Method:  "GET",
+		Path:    "/some-path",
+		Params:  map[string]string{"Id": "42"},
+		Headers: map[string][]string{},
+		URL:     URL,
+		Body:    io.NopCloser(strings.NewReader("initial req content")),
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	if strType, ok := resp.Data["type"].(string); !ok || strType != "IPA" {
+        t.Errorf("unexpected type %#v", resp.Data["type"])
+	}
+
+    v, ok := resp.Data["IBU"]
+    if !ok {
+        t.Errorf("the IBU key must exist and be nil: %#v", v)
+    }
+    if v != nil{
+        t.Errorf("IBU value should be nil")
+    }
+}

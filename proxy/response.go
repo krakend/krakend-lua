@@ -283,7 +283,7 @@ func tableSet(c *binder.Context) error {
 		})
 		tab.data[key] = res
 	case *lua.LUserData:
-        if v.Value == nil {
+        if t.Value == nil {
             tab.data[key] = nil
         } else {
             switch v := t.Value.(type) {
@@ -335,7 +335,7 @@ func listSet(c *binder.Context) error {
 		})
 		tab.data[key] = res
 	case *lua.LUserData:
-        if v.Value == nil {
+        if t.Value == nil {
             tab.data[key] = nil
         } else {
             switch v := t.Value.(type) {
@@ -426,7 +426,7 @@ func parseToTable(k, v lua.LValue, acc map[string]interface{}) {
 	case lua.LTUserData:
         userV := v.(*lua.LUserData)
         if userV.Value == nil {
-            tab.data[key] = nil
+            acc[k.String()] = nil
         } else {
             switch v := userV.Value.(type) {
             case *luaTable:
