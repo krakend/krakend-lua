@@ -504,7 +504,7 @@ func Test_keyValConverter(t *testing.T) {
 local resp = response.load()
 local responseData = resp:data()
 local formated = luaTable.new()
-local items = responseData:get("data"):get(0)
+local items = responseData:get("data")
 
 local size = items:len()
 
@@ -513,12 +513,11 @@ if size > 0 then
         local element = items:get(i)
         local key = element:get("key")
         local value = element:get("value")
-        formated:set(key, value)
+        responseData:set(key, value)
     end
 end
 
-responseData:get("data"):set(0,formated)
-
+responseData:del("data")
 `,
 			},
 		},
