@@ -480,7 +480,10 @@ func Test_keyValConverter(t *testing.T) {
     ]}
 `
 	r := map[string]interface{}{}
-	encoding.JSONDecoder(strings.NewReader(response), &r)
+    if err := encoding.JSONDecoder(strings.NewReader(response), &r); err != nil {
+        t.Errorf("cannot deserialize response string: %s", err)
+        return
+    }
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
 		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
@@ -498,6 +501,7 @@ func Test_keyValConverter(t *testing.T) {
 		ExtraConfig: config.ExtraConfig{
 			ProxyNamespace: map[string]interface{}{
 				"post": `
+local resp = response.load()
 local responseData = resp:data()
 local formated = luaTable.new()
 local items = responseData:get("data"):get(0)
@@ -512,6 +516,9 @@ if size > 0 then
         formated:set(key, value)
     end
 end
+
+responseData:get("data"):set(0,formated)
+
 `,
 			},
 		},
@@ -542,7 +549,8 @@ end
 
     v, ok := resp.Data["IBU"]
     if !ok {
-        t.Errorf("the IBU key must exist and be nil: %#v", v)
+        t.Errorf("the IBU key must exist and be nil: %#v", resp.Data)
+        return
     }
     if v != nil{
         t.Errorf("IBU value should be nil")
