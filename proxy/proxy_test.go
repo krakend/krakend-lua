@@ -555,3 +555,84 @@ responseData:del("data")
 		t.Errorf("IBU value should be nil")
 	}
 }
+
+func Test_listGrowsWhenUpperIndexOutOfBound(t *testing.T) {
+	buff := bytes.NewBuffer(make([]byte, 1024))
+	logger, err := logging.NewLogger("ERROR", buff, "pref")
+	if err != nil {
+		t.Error("building the logger:", err.Error())
+		return
+	}
+	r := map[string]interface{}{}
+
+	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
+		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+			return &proxy.Response{
+				Data: r,
+				Metadata: proxy.Metadata{
+					Headers: map[string][]string{},
+				},
+			}, nil
+		}, nil
+	})
+
+	prxy, err := ProxyFactory(logger, dummyProxyFactory).New(&config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			ProxyNamespace: map[string]interface{}{
+				"post": `
+local resp = response.load()
+local responseData = resp:data()
+local growingList = luaList.new()
+
+growingList:set(0, "foo")
+growingList:set(2, "bar")
+
+responseData:set("grow_list", growingList)
+`,
+			},
+		},
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
+
+	resp, err := prxy(context.Background(), &proxy.Request{
+		Method:  "GET",
+		Path:    "/some-path",
+		Params:  map[string]string{"Id": "42"},
+		Headers: map[string][]string{},
+		URL:     URL,
+		Body:    io.NopCloser(strings.NewReader("initial req content")),
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	lst, ok := resp.Data["grow_list"].([]interface{})
+	if !ok {
+		t.Errorf("cannot get list 'grow_list' %#v", resp.Data)
+		return
+	}
+
+	if len(lst) != 3 {
+		t.Errorf("expected len 4 != %d -> %#v", len(lst), resp.Data)
+		return
+	}
+
+	if lst[0].(string) != "foo" {
+		t.Errorf("expected 'foo' in position 0")
+		return
+	}
+	if lst[1] != nil {
+		t.Errorf("expected nil in position 1")
+		return
+	}
+	if lst[2].(string) != "bar" {
+		t.Errorf("expected 'bar' in position 2")
+		return
+	}
+}
