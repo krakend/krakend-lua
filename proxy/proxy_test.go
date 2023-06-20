@@ -480,10 +480,10 @@ func Test_keyValConverter(t *testing.T) {
     ]}
 `
 	r := map[string]interface{}{}
-    if err := encoding.JSONDecoder(strings.NewReader(response), &r); err != nil {
-        t.Errorf("cannot deserialize response string: %s", err)
-        return
-    }
+	if err := encoding.JSONDecoder(strings.NewReader(response), &r); err != nil {
+		t.Errorf("cannot deserialize response string: %s", err)
+		return
+	}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
 		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
@@ -543,15 +543,15 @@ responseData:del("data")
 	}
 
 	if strType, ok := resp.Data["type"].(string); !ok || strType != "IPA" {
-        t.Errorf("unexpected type %#v", resp.Data["type"])
+		t.Errorf("unexpected type %#v", resp.Data["type"])
 	}
 
-    v, ok := resp.Data["IBU"]
-    if !ok {
-        t.Errorf("the IBU key must exist and be nil: %#v", resp.Data)
-        return
-    }
-    if v != nil{
-        t.Errorf("IBU value should be nil")
-    }
+	v, ok := resp.Data["IBU"]
+	if !ok {
+		t.Errorf("the IBU key must exist and be nil: %#v", resp.Data)
+		return
+	}
+	if v != nil {
+		t.Errorf("IBU value should be nil")
+	}
 }
