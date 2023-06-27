@@ -36,7 +36,8 @@ func Example_RegisterBackendModule() {
 	code := fmt.Sprintf("local url = '%s'\n%s", ts.URL, sampleLuaCode)
 
 	if err := bindr.DoString(code); err != nil {
-		fmt.Println(err)
+		fmt.Println(err.(*binder.Error).Error())
+		err.(*binder.Error).Print()
 	}
 
 	// output:
@@ -64,8 +65,7 @@ func Example_RegisterBackendModule() {
 	// Hello, client
 }
 
-const sampleLuaCode = `
-print("lua http test\n")
+const sampleLuaCode = `print("lua http test\n")
 local r = http_response.new(url, "POST", '{"foo":"bar"}', {["foo"] = "bar", ["123"] = "456"})
 print(r:statusCode())
 print(r:headers('Content-Type'))
