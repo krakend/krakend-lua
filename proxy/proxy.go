@@ -93,7 +93,7 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 		registerResponseTable(resp, b)
 
 		if err = lua.ToError(b.DoString(cfg.PostCode)); err != nil {
-			return nil, lua.ToError(err)
+			return nil, err
 		}
 
 		return resp, nil
