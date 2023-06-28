@@ -20,14 +20,17 @@ import (
 
 func TestProxyFactory_error(t *testing.T) {
 	testProxyFactoryError(t, `custom_error('expect me')`, "expect me", false, 0)
+	testProxyFactoryPostError(t, `custom_error('expect me')`, "expect me", false, 0)
 }
 
 func TestProxyFactory_errorHTTP(t *testing.T) {
 	testProxyFactoryError(t, `custom_error('expect me', 404)`, "expect me", true, 404)
+	testProxyFactoryPostError(t, `custom_error('expect me', 404)`, "expect me", true, 404)
 }
 
 func TestProxyFactory_errorHTTPJson(t *testing.T) {
 	testProxyFactoryError(t, `custom_error('{"msg":"expect me"}', 404)`, `{"msg":"expect me"}`, true, 404)
+	testProxyFactoryPostError(t, `custom_error('{"msg":"expect me"}', 404)`, `{"msg":"expect me"}`, true, 404)
 }
 
 func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statusCode int) {
@@ -77,6 +80,80 @@ func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statu
 
 	if err == unexpectedErr {
 		t.Errorf("the script did not stop the pipe execution: %v", err)
+		return
+	}
+
+	switch err := err.(type) {
+	case lua.ErrInternalHTTP:
+		if !isHTTP {
+			t.Errorf("unexpected http error: %v (%T)", err, err)
+			return
+		}
+		if sc := err.StatusCode(); sc != statusCode {
+			t.Errorf("unexpected http status code: %d", sc)
+			return
+		}
+	case lua.ErrInternal:
+		if isHTTP {
+			t.Errorf("unexpected internal error: %v (%T)", err, err)
+			return
+		}
+	default:
+		t.Errorf("unexpected error: %v (%T)", err, err)
+		return
+	}
+
+	if e := err.Error(); e != errMsg {
+		t.Errorf("unexpected error. have: '%s', want: '%s' (%T)", e, errMsg, err)
+		return
+	}
+}
+
+func testProxyFactoryPostError(t *testing.T, code, errMsg string, isHTTP bool, statusCode int) {
+	buff := bytes.NewBuffer(make([]byte, 1024))
+	logger, err := logging.NewLogger("ERROR", buff, "pref")
+	if err != nil {
+		t.Error("building the logger:", err.Error())
+		return
+	}
+
+	explosive := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
+			return &proxy.Response{}, nil
+		}, nil
+	})
+
+	prxy, err := ProxyFactory(logger, explosive).New(&config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			ProxyNamespace: map[string]interface{}{
+				"post": code,
+			},
+		},
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
+
+	resp, err := prxy(context.Background(), &proxy.Request{
+		Method:  "GET",
+		Path:    "/some-path",
+		Params:  map[string]string{"Id": "42"},
+		Headers: map[string][]string{},
+		URL:     URL,
+		Body:    io.NopCloser(strings.NewReader("initial req content")),
+	})
+
+	if resp != nil {
+		t.Errorf("unexpected response: %v", resp)
+		return
+	}
+
+	if err == nil {
+		t.Error("the script did not return an error")
 		return
 	}
 
