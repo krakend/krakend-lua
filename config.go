@@ -2,7 +2,7 @@ package lua
 
 import (
 	"bytes"
-	"crypto/md5"
+	"crypto/md5" // skipcq: GSC-G501
 	"encoding/hex"
 	"errors"
 	"io"
@@ -80,7 +80,9 @@ func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, er
 	}
 	res.SourceLoader = onceLoader(loader)
 
-	checksums, ok := c["md5"].(map[string]interface{})
+	// TODO: at some point we might want to change the hashing
+	// function, but we need to do it in a backards compat mode:
+	checksums, ok := c["md5"].(map[string]interface{}) // skipcq: GO-S1023, GSC-G401
 	if !ok {
 		return res, nil
 	}
