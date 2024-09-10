@@ -71,9 +71,7 @@ func ToError(e error) error {
 	}
 
 	originalMsg := e.Error()
-	start := strings.Index(originalMsg, ":")
-	errMsg := originalMsg[start+2:]
-	errMsgParts := strings.Split(errMsg, separator)
+	errMsgParts := strings.Split(originalMsg[strings.Index(originalMsg, ":")+2:], separator)
 
 	if len(errMsgParts) == 0 {
 		return e
