@@ -151,3 +151,41 @@ func TestHandlerFactory_errorHTTP(t *testing.T) {
 		return
 	}
 }
+
+func TestHandlerFactory_errorHTTPWithContentType(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	cfg := &config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			router.Namespace: map[string]interface{}{
+				"pre": `custom_error('expect me', 999, 'foo/bar')`,
+			},
+		},
+	}
+
+	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) gin.HandlerFunc {
+		return func(c *gin.Context) {
+			t.Error("the handler shouldn't be executed")
+		}
+	}
+	handler := HandlerFactory(logging.NoOp, hf)(cfg, proxy.NoopProxy)
+
+	engine := gin.New()
+	engine.GET("/some-path/:id", handler)
+
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req.Header.Set("Accept", "application/json")
+	w := httptest.NewRecorder()
+
+	engine.ServeHTTP(w, req)
+
+	if w.Code != 999 {
+		t.Errorf("unexpected status code %d", w.Code)
+		return
+	}
+
+	if h := w.Header().Get("content-type"); h != "foo/bar" {
+		t.Errorf("unexpected content-type %s", h)
+		return
+	}
+}
