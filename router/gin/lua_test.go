@@ -1,7 +1,7 @@
 package gin
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -58,7 +58,7 @@ func TestHandlerFactory(t *testing.T) {
 			if e := c.Query("extra"); e != "foo" {
 				t.Errorf("unexpected querystring extra: '%s'", e)
 			}
-			b, err := ioutil.ReadAll(c.Request.Body)
+			b, err := io.ReadAll(c.Request.Body)
 			if err != nil {
 				t.Error(err)
 				return
@@ -73,7 +73,7 @@ func TestHandlerFactory(t *testing.T) {
 	engine := gin.New()
 	engine.GET("/some-path/:id", handler)
 
-	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
 	req.Host = "domain.tld"
 	req.Header.Set("Accept", "application/json")
 	w := httptest.NewRecorder()
@@ -107,7 +107,7 @@ func TestHandlerFactory_error(t *testing.T) {
 	engine := gin.New()
 	engine.GET("/some-path/:id", handler)
 
-	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
 	req.Header.Set("Accept", "application/json")
 	w := httptest.NewRecorder()
 
@@ -140,7 +140,7 @@ func TestHandlerFactory_errorHTTP(t *testing.T) {
 	engine := gin.New()
 	engine.GET("/some-path/:id", handler)
 
-	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
 	req.Header.Set("Accept", "application/json")
 	w := httptest.NewRecorder()
 
@@ -173,7 +173,7 @@ func TestHandlerFactory_errorHTTPWithContentType(t *testing.T) {
 	engine := gin.New()
 	engine.GET("/some-path/:id", handler)
 
-	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
 	req.Header.Set("Accept", "application/json")
 	w := httptest.NewRecorder()
 
