@@ -98,7 +98,7 @@ func TestHandlerFactory_error(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) gin.HandlerFunc {
-		return func(c *gin.Context) {
+		return func(_ *gin.Context) {
 			t.Error("the handler shouldn't be executed")
 		}
 	}
@@ -131,7 +131,7 @@ func TestHandlerFactory_errorHTTP(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) gin.HandlerFunc {
-		return func(c *gin.Context) {
+		return func(_ *gin.Context) {
 			t.Error("the handler shouldn't be executed")
 		}
 	}
@@ -164,7 +164,7 @@ func TestHandlerFactory_errorHTTPWithContentType(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) gin.HandlerFunc {
-		return func(c *gin.Context) {
+		return func(_ *gin.Context) {
 			t.Error("the handler shouldn't be executed")
 		}
 	}

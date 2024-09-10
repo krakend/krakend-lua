@@ -33,7 +33,7 @@ func TestHandlerFactory(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+		return func(_ http.ResponseWriter, r *http.Request) {
 			if URL := r.URL.String(); URL != "/some-path/42?extra=foo&id=1&more=true" {
 				t.Errorf("unexpected URL: %s", URL)
 			}
@@ -89,7 +89,7 @@ func TestHandlerFactory_error(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+		return func(_ http.ResponseWriter, _ *http.Request) {
 			t.Error("the handler shouldn't be executed")
 		}
 	}
@@ -120,7 +120,7 @@ func TestHandlerFactory_errorHTTP(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+		return func(_ http.ResponseWriter, _ *http.Request) {
 			t.Error("the handler shouldn't be executed")
 		}
 	}
@@ -151,7 +151,7 @@ func TestHandlerFactory_errorHTTPWithContentType(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+		return func(_ http.ResponseWriter, _ *http.Request) {
 			t.Error("the handler shouldn't be executed")
 		}
 	}

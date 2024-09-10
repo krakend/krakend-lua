@@ -250,7 +250,7 @@ func TestProxyFactory(t *testing.T) {
 	}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, req *proxy.Request) (*proxy.Response, error) {
 			if req.Method != "POST" {
 				t.Errorf("unexpected method %s", req.Method)
 			}
@@ -446,7 +446,7 @@ func Test_Issue7(t *testing.T) {
 	json.Unmarshal([]byte(response), &r)
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
 			return &proxy.Response{
 				Data: r,
 				Metadata: proxy.Metadata{
@@ -518,7 +518,7 @@ func Test_jsonNumber(t *testing.T) {
 	encoding.JSONDecoder(strings.NewReader(response), &r)
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
 			return &proxy.Response{
 				Data: r,
 				Metadata: proxy.Metadata{
@@ -594,7 +594,7 @@ func Test_keyValConverter(t *testing.T) {
 	}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
 			return &proxy.Response{
 				Data: r,
 				Metadata: proxy.Metadata{
@@ -674,7 +674,7 @@ func Test_listGrowsWhenUpperIndexOutOfBound(t *testing.T) {
 	r := map[string]interface{}{}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
 			return &proxy.Response{
 				Data: r,
 				Metadata: proxy.Metadata{
