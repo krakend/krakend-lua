@@ -3,9 +3,9 @@ module github.com/krakendio/krakend-lua/v2
 go 1.19
 
 require (
-	github.com/gin-gonic/gin v1.10.0
+	github.com/gin-gonic/gin v1.9.1
 	github.com/krakendio/binder v0.0.0-20230413105421-1bbe94e65f45
-	github.com/luraproject/lura/v2 v2.0.5
+	github.com/luraproject/lura/v2 v2.7.0
 	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583
 )
 
