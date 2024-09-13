@@ -58,6 +58,9 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 			if err := process(c, &cfg); err != nil {
 				err = lua.ToError(err)
 				if errhttp, ok := err.(errHTTP); ok {
+					if e, ok := err.(errHTTPWithContentType); ok {
+						c.Writer.Header().Add("content-type", e.Encoding())
+					}
 					c.AbortWithError(errhttp.StatusCode(), err)
 					return
 				}
@@ -73,6 +76,11 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 type errHTTP interface {
 	error
 	StatusCode() int
+}
+
+type errHTTPWithContentType interface {
+	errHTTP
+	Encoding() string
 }
 
 func process(c *gin.Context, cfg *lua.Config) error {

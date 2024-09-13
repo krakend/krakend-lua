@@ -19,21 +19,26 @@ import (
 )
 
 func TestProxyFactory_error(t *testing.T) {
-	testProxyFactoryError(t, `custom_error('expect me')`, "expect me", false, 0)
-	testProxyFactoryPostError(t, `custom_error('expect me')`, "expect me", false, 0)
+	testProxyFactoryError(t, `custom_error('expect me')`, "expect me", "", false, 0)
+	testProxyFactoryPostError(t, `custom_error('expect me')`, "expect me", "", false, 0)
 }
 
 func TestProxyFactory_errorHTTP(t *testing.T) {
-	testProxyFactoryError(t, `custom_error('expect me', 404)`, "expect me", true, 404)
-	testProxyFactoryPostError(t, `custom_error('expect me', 404)`, "expect me", true, 404)
+	testProxyFactoryError(t, `custom_error('expect me', 404)`, "expect me", "", true, 404)
+	testProxyFactoryPostError(t, `custom_error('expect me', 404)`, "expect me", "", true, 404)
 }
 
 func TestProxyFactory_errorHTTPJson(t *testing.T) {
-	testProxyFactoryError(t, `custom_error('{"msg":"expect me"}', 404)`, `{"msg":"expect me"}`, true, 404)
-	testProxyFactoryPostError(t, `custom_error('{"msg":"expect me"}', 404)`, `{"msg":"expect me"}`, true, 404)
+	testProxyFactoryError(t, `custom_error('{"msg":"expect me"}', 404)`, `{"msg":"expect me"}`, "", true, 404)
+	testProxyFactoryPostError(t, `custom_error('{"msg":"expect me"}', 404)`, `{"msg":"expect me"}`, "", true, 404)
 }
 
-func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statusCode int) {
+func TestProxyFactory_errorHTTPWithContentType(t *testing.T) {
+	testProxyFactoryError(t, `custom_error('{"msg":"expect me"}', 404, 'application/json')`, `{"msg":"expect me"}`, "application/json", true, 404)
+	testProxyFactoryPostError(t, `custom_error('{"msg":"expect me"}', 404, 'application/json')`, `{"msg":"expect me"}`, "application/json", true, 404)
+}
+
+func testProxyFactoryError(t *testing.T, code, errMsg, contentType string, isHTTP bool, statusCode int) {
 	buff := bytes.NewBuffer(make([]byte, 1024))
 	logger, err := logging.NewLogger("ERROR", buff, "pref")
 	if err != nil {
@@ -98,6 +103,19 @@ func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statu
 			t.Errorf("unexpected internal error: %v (%T)", err, err)
 			return
 		}
+	case lua.ErrInternalHTTPWithContentType:
+		if !isHTTP {
+			t.Errorf("unexpected http error: %v (%T)", err, err)
+			return
+		}
+		if sc := err.StatusCode(); sc != statusCode {
+			t.Errorf("unexpected http status code: %d", sc)
+			return
+		}
+		if ct := err.Encoding(); ct != contentType {
+			t.Errorf("unexpected content type: %s", ct)
+			return
+		}
 	default:
 		t.Errorf("unexpected error: %v (%T)", err, err)
 		return
@@ -109,7 +127,7 @@ func testProxyFactoryError(t *testing.T, code, errMsg string, isHTTP bool, statu
 	}
 }
 
-func testProxyFactoryPostError(t *testing.T, code, errMsg string, isHTTP bool, statusCode int) {
+func testProxyFactoryPostError(t *testing.T, code, errMsg, contentType string, isHTTP bool, statusCode int) {
 	buff := bytes.NewBuffer(make([]byte, 1024))
 	logger, err := logging.NewLogger("ERROR", buff, "pref")
 	if err != nil {
@@ -172,6 +190,19 @@ func testProxyFactoryPostError(t *testing.T, code, errMsg string, isHTTP bool, s
 			t.Errorf("unexpected internal error: %v (%T)", err, err)
 			return
 		}
+	case lua.ErrInternalHTTPWithContentType:
+		if !isHTTP {
+			t.Errorf("unexpected http error: %v (%T)", err, err)
+			return
+		}
+		if sc := err.StatusCode(); sc != statusCode {
+			t.Errorf("unexpected http status code: %d", sc)
+			return
+		}
+		if ct := err.Encoding(); ct != contentType {
+			t.Errorf("unexpected content type: %s", ct)
+			return
+		}
 	default:
 		t.Errorf("unexpected error: %v (%T)", err, err)
 		return
@@ -219,7 +250,7 @@ func TestProxyFactory(t *testing.T) {
 	}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, req *proxy.Request) (*proxy.Response, error) {
 			if req.Method != "POST" {
 				t.Errorf("unexpected method %s", req.Method)
 			}
@@ -415,7 +446,7 @@ func Test_Issue7(t *testing.T) {
 	json.Unmarshal([]byte(response), &r)
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
 			return &proxy.Response{
 				Data: r,
 				Metadata: proxy.Metadata{
@@ -487,7 +518,7 @@ func Test_jsonNumber(t *testing.T) {
 	encoding.JSONDecoder(strings.NewReader(response), &r)
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
 			return &proxy.Response{
 				Data: r,
 				Metadata: proxy.Metadata{
@@ -563,7 +594,7 @@ func Test_keyValConverter(t *testing.T) {
 	}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
 			return &proxy.Response{
 				Data: r,
 				Metadata: proxy.Metadata{
@@ -643,7 +674,7 @@ func Test_listGrowsWhenUpperIndexOutOfBound(t *testing.T) {
 	r := map[string]interface{}{}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
-		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+		return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
 			return &proxy.Response{
 				Data: r,
 				Metadata: proxy.Metadata{
