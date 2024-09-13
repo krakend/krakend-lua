@@ -24,6 +24,7 @@ func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
 	tab.Dynamic("len", tableLen)
 	tab.Dynamic("del", tableDel)
 	tab.Dynamic("keys", tableKeys)
+	tab.Dynamic("keyExists", tableKeyExists)
 
 	list := b.Table("luaList")
 	list.Static("new", func(c *binder.Context) error {
@@ -143,6 +144,19 @@ func (*response) data(c *binder.Context) error {
 	}
 	c.Push().Data(&luaTable{data: resp.Data}, "luaTable")
 
+	return nil
+}
+
+func tableKeyExists(c *binder.Context) error {
+	if c.Top() != 2 {
+		return errNeedsArguments
+	}
+	tab, ok := c.Arg(1).Data().(*luaTable)
+	if !ok {
+		return errResponseExpected
+	}
+	_, ok = tab.data[c.Arg(2).String()]
+	c.Push().Bool(ok)
 	return nil
 }
 
