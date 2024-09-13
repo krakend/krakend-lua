@@ -2,11 +2,11 @@ package lua
 
 import (
 	"bytes"
-	"crypto/md5"
+	"crypto/md5" // skipcq: GSC-G501
 	"encoding/hex"
 	"errors"
 	"io"
-	"io/ioutil"
+	"os"
 
 	"github.com/luraproject/lura/v2/config"
 	"github.com/luraproject/lura/v2/logging"
@@ -29,7 +29,7 @@ type SourceLoader interface {
 	Get(string) (string, bool)
 }
 
-func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, error) {
+func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, error) { // skipcq: GO-R1005
 	res := Config{}
 	v, ok := e[namespace]
 	if !ok {
@@ -54,7 +54,7 @@ func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, er
 
 	sources, ok := c["sources"].([]interface{})
 	if ok {
-		s := []string{}
+		s := make([]string, 0, len(sources))
 		for _, source := range sources {
 			if t, ok := source.(string); ok {
 				s = append(s, t)
@@ -71,7 +71,7 @@ func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, er
 	loader := map[string]string{}
 
 	for _, source := range res.Sources {
-		b, err := ioutil.ReadFile(source)
+		b, err := os.ReadFile(source)
 		if err != nil {
 			l.Error("[Lua] Opening the source file:", err.Error())
 			continue
@@ -80,7 +80,9 @@ func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, er
 	}
 	res.SourceLoader = onceLoader(loader)
 
-	checksums, ok := c["md5"].(map[string]interface{})
+	// TODO: at some point we might want to change the hashing
+	// function, but we need to do it in a backards compat mode:
+	checksums, ok := c["md5"].(map[string]interface{}) // skipcq: GO-S1023, GSC-G401
 	if !ok {
 		return res, nil
 	}
@@ -118,7 +120,7 @@ func (o onceLoader) Get(k string) (string, bool) {
 type liveLoader struct{}
 
 func (liveLoader) Get(k string) (string, bool) {
-	b, err := ioutil.ReadFile(k)
+	b, err := os.ReadFile(k)
 	if err != nil {
 		return "", false
 	}
