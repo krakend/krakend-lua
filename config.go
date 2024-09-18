@@ -93,7 +93,7 @@ func Parse(l logging.Logger, e config.ExtraConfig, namespace string) (Config, er
 			return res, ErrWrongChecksumType(source)
 		}
 		content, _ := res.SourceLoader.Get(source)
-		hash := md5.New()
+		hash := md5.New() // skipcq: GO-S1023, GSC-G401
 		if _, err := io.Copy(hash, bytes.NewBuffer([]byte(content))); err != nil {
 			return res, err
 		}
