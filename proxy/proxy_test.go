@@ -16,6 +16,7 @@ import (
 	"github.com/luraproject/lura/v2/encoding"
 	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"
+	"github.com/luraproject/lura/v2/transport/http/client"
 )
 
 func TestProxyFactory_error(t *testing.T) {
@@ -711,5 +712,127 @@ responseData:set("grow_list", growingList)
 	if lst[2].(string) != "bar" {
 		t.Errorf("expected 'bar' in position 2")
 		return
+	}
+}
+
+func Test_tableGetSupportsClientErrors(t *testing.T) {
+	errA := client.HTTPResponseError{
+		Code: 418,
+		Msg:  "I'm a teapot",
+		Enc:  "text/plain",
+	}
+	errB := client.NamedHTTPResponseError{
+		HTTPResponseError: client.HTTPResponseError{
+			Code: 481,
+			Msg:  "I'm not a teapot",
+			Enc:  "text/plain",
+		},
+	}
+
+	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
+		return func(ctx context.Context, req *proxy.Request) (*proxy.Response, error) {
+			return &proxy.Response{
+				Data: map[string]interface{}{
+					"error_backend_alias_a": errA,
+					"error_backend_alias_b": errB,
+				},
+				Metadata: proxy.Metadata{
+					Headers: map[string][]string{},
+				},
+			}, nil
+		}, nil
+	})
+
+	prxy, err := ProxyFactory(logging.NoOp, dummyProxyFactory).New(&config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			ProxyNamespace: map[string]interface{}{
+				"post": `
+local resp = response.load()
+local responseData = resp:data()
+local errorA = responseData:get('error_backend_alias_a')
+responseData:set("code_a", errorA:get('http_status_code'))
+responseData:set("body_a", errorA:get('http_body'))
+responseData:set("encoding_a", errorA:get('http_body_encoding'))
+local errorB = responseData:get('error_backend_alias_b')
+responseData:set("code_b", errorB:get('http_status_code'))
+responseData:set("body_b", errorB:get('http_body'))
+responseData:set("encoding_b", errorB:get('http_body_encoding'))
+responseData:set("name_b", errorB:get('name'))
+`,
+			},
+		},
+	})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
+
+	resp, err := prxy(context.Background(), &proxy.Request{
+		Method:  "GET",
+		Path:    "/some-path",
+		Params:  map[string]string{"Id": "42"},
+		Headers: map[string][]string{},
+		URL:     URL,
+		Body:    io.NopCloser(strings.NewReader("initial req content")),
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	bodyA, ok := resp.Data["body_a"].(string)
+	if !ok {
+		t.Errorf("cannot get 'body_a' %#v", resp.Data)
+		return
+	}
+	if bodyA != errA.Msg {
+		t.Errorf("unexpected body a. have %s, want %s", bodyA, errA.Msg)
+	}
+
+	bodyB, ok := resp.Data["body_b"].(string)
+	if !ok {
+		t.Errorf("cannot get 'body_b' %#v", resp.Data)
+		return
+	}
+	if bodyB != errB.Msg {
+		t.Errorf("unexpected body b. have %s, want %s", bodyB, errB.Msg)
+	}
+
+	codeA, ok := resp.Data["code_a"].(float64)
+	if !ok {
+		t.Errorf("cannot get 'code_a' %#v", resp.Data)
+		return
+	}
+	if int(codeA) != errA.Code {
+		t.Errorf("unexpected code a. have %d, want %d", int(codeA), errA.Code)
+	}
+
+	codeB, ok := resp.Data["code_b"].(float64)
+	if !ok {
+		t.Errorf("cannot get 'code_b' %#v", resp.Data)
+		return
+	}
+	if int(codeB) != errB.Code {
+		t.Errorf("unexpected code b. have %d, want %d", int(codeB), errB.Code)
+	}
+
+	encA, ok := resp.Data["encoding_a"].(string)
+	if !ok {
+		t.Errorf("cannot get 'encoding_a' %#v", resp.Data)
+		return
+	}
+	if encA != errA.Enc {
+		t.Errorf("unexpected encoding a. have %s, want %s", encA, errA.Enc)
+	}
+
+	encB, ok := resp.Data["encoding_b"].(string)
+	if !ok {
+		t.Errorf("cannot get 'encoding_b' %#v", resp.Data)
+		return
+	}
+	if encB != errB.Enc {
+		t.Errorf("unexpected encoding b. have %s, want %s", encB, errB.Enc)
 	}
 }
