@@ -10,6 +10,7 @@ import (
 
 	"github.com/krakendio/binder"
 	"github.com/luraproject/lura/v2/proxy"
+	"github.com/luraproject/lura/v2/transport/http/client"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -215,6 +216,12 @@ func tableGet(c *binder.Context) error {
 		c.Push().Data(&luaList{data: t}, "luaList")
 	case map[string]interface{}:
 		c.Push().Data(&luaTable{data: t}, "luaTable")
+	case client.HTTPResponseError:
+		c.Push().Data(&luaTable{data: clientErrorToMap(t)}, "luaTable")
+	case client.NamedHTTPResponseError:
+		d := clientErrorToMap(t.HTTPResponseError)
+		d["name"] = t.Name()
+		c.Push().Data(&luaTable{data: d}, "luaTable")
 	default:
 		return fmt.Errorf("unknown type (%T) %v", t, t)
 	}
@@ -388,24 +395,8 @@ type luaTable struct {
 	data map[string]interface{}
 }
 
-func (l *luaTable) get(k string) interface{} {
-	return l.data[k]
-}
-
-func (l *luaTable) set(k string, v interface{}) {
-	l.data[k] = v
-}
-
 type luaList struct {
 	data []interface{}
-}
-
-func (l *luaList) get(k int) interface{} {
-	return l.data[k]
-}
-
-func (l *luaList) set(k int, v interface{}) {
-	l.data[k] = v
 }
 
 func parseToTable(k, v lua.LValue, acc map[string]interface{}) {
@@ -440,5 +431,13 @@ func parseToTable(k, v lua.LValue, acc map[string]interface{}) {
 			parseToTable(k, v, res)
 		})
 		acc[k.String()] = res
+	}
+}
+
+func clientErrorToMap(err client.HTTPResponseError) map[string]interface{} {
+	return map[string]interface{}{
+		"http_status_code":   err.StatusCode(),
+		"http_body":          err.Error(),
+		"http_body_encoding": err.Encoding(),
 	}
 }

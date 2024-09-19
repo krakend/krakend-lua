@@ -1,7 +1,7 @@
 package mux
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -52,7 +52,7 @@ func TestHandlerFactory(t *testing.T) {
 			// if id := c.Param("id"); id != "42" {
 			// 	t.Errorf("unexpected param id: %s", id)
 			// }
-			b, err := ioutil.ReadAll(r.Body)
+			b, err := io.ReadAll(r.Body)
 			if err != nil {
 				t.Error(err)
 				return

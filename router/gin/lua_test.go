@@ -1,7 +1,7 @@
 package gin
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -58,7 +58,7 @@ func TestHandlerFactory(t *testing.T) {
 			if e := c.Query("extra"); e != "foo" {
 				t.Errorf("unexpected querystring extra: '%s'", e)
 			}
-			b, err := ioutil.ReadAll(c.Request.Body)
+			b, err := io.ReadAll(c.Request.Body)
 			if err != nil {
 				t.Error(err)
 				return
