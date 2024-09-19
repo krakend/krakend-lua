@@ -1,7 +1,6 @@
 package lua
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -30,7 +29,7 @@ func TestParse(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 		return
 	}
-	b, _ := ioutil.ReadFile(source)
+	b, _ := os.ReadFile(source)
 	if src, ok := cfg.Get(source); !ok || src != string(b) {
 		t.Errorf("wrong content %s", string(b))
 	}
@@ -46,7 +45,7 @@ func TestParse(t *testing.T) {
 }
 
 func TestParse_live(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "test_parse_live")
+	tmpfile, err := os.CreateTemp("", "test_parse_live")
 	if err != nil {
 		t.Error(err)
 		return
@@ -85,7 +84,7 @@ func TestParse_live(t *testing.T) {
 		t.Errorf("wrong content %s", src)
 	}
 
-	if err := ioutil.WriteFile(source, []byte(finalContent), 0644); err != nil {
+	if err := os.WriteFile(source, []byte(finalContent), 0644); err != nil {
 		t.Error(err)
 		return
 	}
