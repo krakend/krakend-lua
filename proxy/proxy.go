@@ -61,6 +61,7 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 			SkipOpenLibs:        !cfg.AllowOpenLibs,
 			IncludeGoStackTrace: true,
 		})
+		defer b.Close()
 
 		lua.RegisterErrors(b)
 		lua.RegisterNil(b)
