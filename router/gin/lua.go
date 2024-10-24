@@ -88,6 +88,7 @@ func process(c *gin.Context, cfg *lua.Config) error {
 		SkipOpenLibs:        !cfg.AllowOpenLibs,
 		IncludeGoStackTrace: true,
 	})
+	defer b.Close()
 
 	lua.RegisterErrors(b)
 	registerCtxTable(c, b)
