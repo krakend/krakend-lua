@@ -325,6 +325,16 @@ func TestProxyFactory(t *testing.T) {
 		responseData:set("keys", responseData:keys())
 		responseData:del("to_be_removed")
 
+		if responseData:keyExists("to_be_removed")
+		then
+			custom_error("unexpected key")
+		end
+
+		if not responseData:keyExists("bar")
+		then
+			custom_error("missing required key")
+		end
+
 		resp:headers("Content-Type", "application/xml")
 		resp:statusCode(200)
 		resp:body(resp:body() .. " bar" .. resp:headers("unknown"))`,
