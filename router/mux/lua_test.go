@@ -33,7 +33,7 @@ func TestHandlerFactory(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+		return func(_ http.ResponseWriter, r *http.Request) {
 			if URL := r.URL.String(); URL != "/some-path/42?extra=foo&id=1&more=true" {
 				t.Errorf("unexpected URL: %s", URL)
 			}
@@ -66,7 +66,7 @@ func TestHandlerFactory(t *testing.T) {
 		return map[string]string{}
 	})(cfg, proxy.NoopProxy)
 
-	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
 	req.Header.Set("Accept", "application/json")
 	w := httptest.NewRecorder()
 
@@ -89,7 +89,7 @@ func TestHandlerFactory_error(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+		return func(_ http.ResponseWriter, _ *http.Request) {
 			t.Error("the handler shouldn't be executed")
 		}
 	}
@@ -97,7 +97,7 @@ func TestHandlerFactory_error(t *testing.T) {
 		return map[string]string{}
 	})(cfg, proxy.NoopProxy)
 
-	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
 	req.Header.Set("Accept", "application/json")
 	w := httptest.NewRecorder()
 
@@ -120,7 +120,7 @@ func TestHandlerFactory_errorHTTP(t *testing.T) {
 	}
 
 	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
+		return func(_ http.ResponseWriter, _ *http.Request) {
 			t.Error("the handler shouldn't be executed")
 		}
 	}
@@ -128,7 +128,7 @@ func TestHandlerFactory_errorHTTP(t *testing.T) {
 		return map[string]string{}
 	})(cfg, proxy.NoopProxy)
 
-	req, _ := http.NewRequest("GET", "/some-path/42?id=1", nil)
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
 	req.Header.Set("Accept", "application/json")
 	w := httptest.NewRecorder()
 
@@ -136,6 +136,42 @@ func TestHandlerFactory_errorHTTP(t *testing.T) {
 
 	if w.Code != 999 {
 		t.Errorf("unexpected status code %d", w.Code)
+		return
+	}
+}
+
+func TestHandlerFactory_errorHTTPWithContentType(t *testing.T) {
+	cfg := &config.EndpointConfig{
+		Endpoint: "/",
+		ExtraConfig: config.ExtraConfig{
+			router.Namespace: map[string]interface{}{
+				"pre": `custom_error('expect me', 999, 'foo/bar')`,
+			},
+		},
+	}
+
+	hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
+		return func(_ http.ResponseWriter, _ *http.Request) {
+			t.Error("the handler shouldn't be executed")
+		}
+	}
+	handler := HandlerFactory(logging.NoOp, hf, func(_ *http.Request) map[string]string {
+		return map[string]string{}
+	})(cfg, proxy.NoopProxy)
+
+	req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
+	req.Header.Set("Accept", "application/json")
+	w := httptest.NewRecorder()
+
+	handler(w, req)
+
+	if w.Code != 999 {
+		t.Errorf("unexpected status code %d", w.Code)
+		return
+	}
+
+	if h := w.Header().Get("content-type"); h != "foo/bar" {
+		t.Errorf("unexpected content-type %s", h)
 		return
 	}
 }

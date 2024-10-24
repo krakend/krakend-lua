@@ -3,6 +3,7 @@ package mux
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -66,7 +67,12 @@ func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtra
 			if err := process(r, pe, &cfg); err != nil {
 				err = lua.ToError(err)
 				if errhttp, ok := err.(errHTTP); ok {
-					http.Error(w, err.Error(), errhttp.StatusCode())
+					if e, ok := err.(errHTTPWithContentType); ok {
+						fmt.Println(e.Encoding())
+						w.Header().Add("content-type", e.Encoding())
+					}
+					w.WriteHeader(errhttp.StatusCode())
+					w.Write([]byte(err.Error()))
 					return
 				}
 
@@ -82,6 +88,11 @@ func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtra
 type errHTTP interface {
 	error
 	StatusCode() int
+}
+
+type errHTTPWithContentType interface {
+	errHTTP
+	Encoding() string
 }
 
 func process(r *http.Request, pe mux.ParamExtractor, cfg *lua.Config) error {
