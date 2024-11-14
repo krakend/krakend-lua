@@ -20,7 +20,7 @@ import (
 )
 
 func TestProxyFactory_luaError(t *testing.T) {
-	var luaPreErrorTestTable = []struct {
+	var luaErrorTestTable = []struct {
 		Name          string
 		Cfg           map[string]interface{}
 		ExpectedError string
@@ -117,13 +117,6 @@ func TestProxyFactory_luaError(t *testing.T) {
 			},
 			ExpectedError: "attempt to call a non-function object (bad-func.lua:L3)",
 		},
-	}
-
-	var luaPostErrorTestTable = []struct {
-		Name          string
-		Cfg           map[string]interface{}
-		ExpectedError string
-	}{
 		{
 			Name: "Post: Inline syntax error",
 			Cfg: map[string]interface{}{
@@ -209,8 +202,7 @@ func TestProxyFactory_luaError(t *testing.T) {
 		},
 	}
 
-	tests := append(luaPreErrorTestTable, luaPostErrorTestTable...)
-	for _, test := range tests {
+	for _, test := range luaErrorTestTable {
 		t.Run(test.Name, func(t *testing.T) {
 			logger, err := logging.NewLogger("ERROR", bytes.NewBuffer(make([]byte, 1024)), "pref")
 			if err != nil {
