@@ -61,29 +61,48 @@ func (e ErrInternalHTTPWithContentType) Encoding() string {
 
 const separator = " || "
 
-func ToError(e error) error {
+func ToError(e error, source *SourceMap) error {
 	if e == nil {
 		return nil
 	}
 
-	if _, ok := e.(*binder.Error); !ok {
+	binderError, ok := e.(*binder.Error)
+	if !ok {
 		return e
 	}
 
-	originalMsg := e.Error()
-	errMsgParts := strings.Split(originalMsg[strings.Index(originalMsg, ":")+2:], separator)
+	originalMsg := binderError.Error()
+	msgSplitIndex := strings.Index(originalMsg, ":")
+	errMsgParts := strings.Split(originalMsg[msgSplitIndex+2:], separator)
 
 	if len(errMsgParts) == 0 {
-		return e
+		return binderError
 	}
+
+	// Internal errors not coming from a LUA custom_error()
 	if len(errMsgParts) == 1 {
+		if source == nil {
+			return ErrInternal(errMsgParts[0])
+		}
+		luaLine, convErr := strconv.Atoi(originalMsg[5:msgSplitIndex])
+		if convErr != nil {
+			luaLine = 0
+		}
+		if affectedScript, relativeLine, err := source.AffectedSource(luaLine); err == nil {
+			return ErrInternal(fmt.Sprintf("%s (%s:L%d)", errMsgParts[0], affectedScript, relativeLine))
+		}
 		return ErrInternal(errMsgParts[0])
 	}
 
+	// If the error was correctly splitted by separator means we're dealing with a LUA custom_error()
 	code, err := strconv.Atoi(errMsgParts[1])
 	if err != nil {
 		code = 500
 	}
+	if code == -1 {
+		return ErrInternal(errMsgParts[0])
+	}
+
 	errHTTP := ErrInternalHTTP{msg: errMsgParts[0], code: code}
 
 	if len(errMsgParts) == 2 {
@@ -102,7 +121,7 @@ func RegisterErrors(b *binder.Binder) {
 		case 0:
 			return errNeedsArguments
 		case 1:
-			return errors.New(c.Arg(1).String())
+			return fmt.Errorf("%s%s%d", c.Arg(1).String(), separator, -1)
 		case 2:
 			return fmt.Errorf("%s%s%d", c.Arg(1).String(), separator, int(c.Arg(2).Number()))
 		default:

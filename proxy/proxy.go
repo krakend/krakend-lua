@@ -57,43 +57,37 @@ func BackendFactory(l logging.Logger, bf proxy.BackendFactory) proxy.BackendFact
 
 func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 	return func(ctx context.Context, req *proxy.Request) (resp *proxy.Response, err error) {
-		b := binder.New(binder.Options{
+		b := lua.NewBinderWrapper(binder.Options{
 			SkipOpenLibs:        !cfg.AllowOpenLibs,
 			IncludeGoStackTrace: true,
 		})
-		defer b.Close()
+		defer b.GetBinder().Close()
 
-		lua.RegisterErrors(b)
-		lua.RegisterNil(b)
-		registerHTTPRequest(ctx, b)
-		registerRequestTable(req, b)
+		lua.RegisterErrors(b.GetBinder())
+		lua.RegisterNil(b.GetBinder())
+		registerHTTPRequest(ctx, b.GetBinder())
+		registerRequestTable(req, b.GetBinder())
 
-		for _, source := range cfg.Sources {
-			src, ok := cfg.Get(source)
-			if !ok {
-				return nil, lua.ErrUnknownSource(source)
-			}
-			if err := b.DoString(src); err != nil {
-				return nil, lua.ToError(err)
-			}
+		if err := b.WithConfig(&cfg); err != nil {
+			return nil, err
 		}
 
-		if err := b.DoString(cfg.PreCode); err != nil {
-			return nil, lua.ToError(err)
+		if err := b.WithCode("pre-script", cfg.PreCode); err != nil {
+			return nil, err
 		}
 
 		if !cfg.SkipNext {
 			resp, err = next(ctx, req)
 			if err != nil {
-				return resp, lua.ToError(err)
+				return resp, lua.ToError(err, nil)
 			}
 		} else {
 			resp = &proxy.Response{}
 		}
 
-		registerResponseTable(resp, b)
+		registerResponseTable(resp, b.GetBinder())
 
-		if err = lua.ToError(b.DoString(cfg.PostCode)); err != nil {
+		if err := b.WithCode("post-script", cfg.PostCode); err != nil {
 			return nil, err
 		}
 
