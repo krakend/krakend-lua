@@ -86,6 +86,7 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 		}
 
 		registerResponseTable(resp, b.GetBinder())
+		registerJson(b.GetBinder())
 
 		if err := b.WithCode("post-script", cfg.PostCode); err != nil {
 			return nil, err
