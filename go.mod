@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/gin-gonic/gin v1.9.1
-	github.com/krakendio/binder v0.0.0-20241024141510-eeb24543bdb1
+	github.com/krakendio/binder v0.0.0-20241114194202-a3efb1159b42
 	github.com/luraproject/lura/v2 v2.7.0
 	github.com/yuin/gopher-lua v1.1.1
 )
