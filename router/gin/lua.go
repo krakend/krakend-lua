@@ -56,7 +56,6 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 
 		return func(c *gin.Context) {
 			if err := process(c, &cfg); err != nil {
-				err = lua.ToError(err)
 				if errhttp, ok := err.(errHTTP); ok {
 					if e, ok := err.(errHTTPWithContentType); ok {
 						c.Writer.Header().Add("content-type", e.Encoding())
@@ -84,26 +83,20 @@ type errHTTPWithContentType interface {
 }
 
 func process(c *gin.Context, cfg *lua.Config) error {
-	b := binder.New(binder.Options{
+	b := lua.NewBinderWrapper(binder.Options{
 		SkipOpenLibs:        !cfg.AllowOpenLibs,
 		IncludeGoStackTrace: true,
 	})
-	defer b.Close()
+	defer b.GetBinder().Close()
 
-	lua.RegisterErrors(b)
-	registerCtxTable(c, b)
+	lua.RegisterErrors(b.GetBinder())
+	registerCtxTable(c, b.GetBinder())
 
-	for _, source := range cfg.Sources {
-		src, ok := cfg.Get(source)
-		if !ok {
-			return lua.ErrUnknownSource(source)
-		}
-		if err := b.DoString(src); err != nil {
-			return err
-		}
+	if err := b.WithConfig(cfg); err != nil {
+		return err
 	}
 
-	return b.DoString(cfg.PreCode)
+	return b.WithCode("pre-script", cfg.PreCode)
 }
 
 func registerCtxTable(c *gin.Context, b *binder.Binder) {

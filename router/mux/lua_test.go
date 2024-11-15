@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/krakendio/krakend-lua/v2/router"
@@ -174,4 +175,138 @@ func TestHandlerFactory_errorHTTPWithContentType(t *testing.T) {
 		t.Errorf("unexpected content-type %s", h)
 		return
 	}
+}
+
+func TestHandlerFactory_luaError(t *testing.T) {
+	var luaPreErrorTestTable = []struct {
+		Name          string
+		Cfg           map[string]interface{}
+		ExpectedError string
+	}{
+		{
+			Name: "Pre: Syntax error",
+			Cfg: map[string]interface{}{
+				"pre": "local c = ctx.load()\nlokal a = 1()\nlocal b = 2",
+			},
+			ExpectedError: "'a': parse error (pre-script:L2)",
+		},
+		{
+			Name: "Pre: Inline syntax error",
+			Cfg: map[string]interface{}{
+				"pre": "local c = ctx.load();lokal a = 1();local b = 2",
+			},
+			ExpectedError: "'a': parse error (pre-script:L1)",
+		},
+		{
+			Name: "Pre: Inline semicolon separated",
+			Cfg: map[string]interface{}{
+				"pre": "local c = ctx.load();method_does_not_exist();local test = 1",
+			},
+			ExpectedError: "attempt to call a non-function object (pre-script:L1)",
+		},
+		{
+			Name: "Pre: Inline",
+			Cfg: map[string]interface{}{
+				"pre": "local c = ctx.load()\nmethod_does_not_exist()\nlocal test = 1",
+			},
+			ExpectedError: "attempt to call a non-function object (pre-script:L2)",
+		},
+		{
+			Name: "Pre: Multiline",
+			Cfg: map[string]interface{}{
+				"pre": `local req = ctx.load()
+						req:method("POST")
+						req:params("foo", "some_new_value")
+						req:headers("Accept", "application/xml")
+						req:url(req:url() .. "&more=true")
+						req:query("extra", "foo")
+						reqw:body(req:body().."fooooooo")`,
+			},
+			ExpectedError: "attempt to index a non-table object(nil) with key 'body' (pre-script:L7)",
+		},
+		{
+			Name: "Pre: Empty custom_error",
+			Cfg: map[string]interface{}{
+				"pre": "custom_error()",
+			},
+			ExpectedError: "need arguments (pre-script:L1)",
+		},
+		{
+			Name: "Pre: Single source with bad code",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../../lua/bad-code.lua",
+				},
+				"pre": "custom_error(\"wont reach here\")",
+			},
+			ExpectedError: "attempt to index a non-table object(function) with key 'really_bad' (bad-code.lua:L5)",
+		},
+		{
+			Name: "Pre: Single source with bad method implementation",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../../lua/bad-func.lua",
+				},
+				"pre": "badfunc(1)",
+			},
+			ExpectedError: "attempt to call a non-function object (bad-func.lua:L3)",
+		},
+		{
+			Name: "Pre: Multiple sources",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../../lua/factorial.lua",
+					"../../lua/bad-code.lua",
+					"../../lua/add.lua",
+				},
+				"pre": "custom_error(\"wont reach here\")",
+			},
+			ExpectedError: "attempt to index a non-table object(function) with key 'really_bad' (bad-code.lua:L5)",
+		},
+		{
+			Name: "Pre: Multiple sources, bad function call",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../../lua/env.lua",
+					"../../lua/factorial.lua",
+					"../../lua/bad-func.lua",
+					"../../lua/add.lua",
+				},
+				"pre": "badfunc(1)",
+			},
+			ExpectedError: "attempt to call a non-function object (bad-func.lua:L3)",
+		},
+	}
+
+	for _, test := range luaPreErrorTestTable {
+		t.Run(test.Name, func(t *testing.T) {
+			cfg := &config.EndpointConfig{
+				Endpoint: "/",
+				ExtraConfig: config.ExtraConfig{
+					router.Namespace: test.Cfg,
+				},
+			}
+
+			hf := func(_ *config.EndpointConfig, _ proxy.Proxy) http.HandlerFunc {
+				return func(_ http.ResponseWriter, _ *http.Request) {
+					t.Error("the handler shouldn't be executed")
+				}
+			}
+			handler := HandlerFactory(logging.NoOp, hf, func(_ *http.Request) map[string]string {
+				return map[string]string{}
+			})(cfg, proxy.NoopProxy)
+
+			req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
+			req.Header.Set("Accept", "application/json")
+			w := httptest.NewRecorder()
+
+			handler(w, req)
+
+			reqErr := strings.Trim(w.Body.String(), "\n")
+			if reqErr != test.ExpectedError {
+				t.Errorf("unexpected error, have: '%s', want: '%s'", reqErr, test.ExpectedError)
+			}
+		})
+	}
+
 }

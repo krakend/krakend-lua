@@ -39,8 +39,8 @@ github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa02
 github.com/klauspost/cpuid/v2 v2.2.7 h1:ZWSB3igEs+d0qvnxR/ZBzXVmxkgt8DdzP6m9pfuVLDM=
 github.com/klauspost/cpuid/v2 v2.2.7/go.mod h1:Lcz8mBdAVJIBVzewtcLocK12l3Y+JytZYpaMropDUws=
 github.com/knz/go-libedit v1.10.1/go.mod h1:MZTVkCWyz0oBc7JOWP3wNAzd002ZbM/5hgShxwh4x8M=
-github.com/krakendio/binder v0.0.0-20241024141510-eeb24543bdb1 h1:hurbmtCzGrwV98WPHXR+D/pzHOkyYy+n4GEpKKA2MG0=
-github.com/krakendio/binder v0.0.0-20241024141510-eeb24543bdb1/go.mod h1:CYIubvHjRQrAM2JZn4pv/Whrmo57K2cHOv2jLVQk4aI=
+github.com/krakendio/binder v0.0.0-20241114194202-a3efb1159b42 h1:kLYwWm+SNQa89DLDznGDjHK0JlhxByUK4BT64S+wTL8=
+github.com/krakendio/binder v0.0.0-20241114194202-a3efb1159b42/go.mod h1:CYIubvHjRQrAM2JZn4pv/Whrmo57K2cHOv2jLVQk4aI=
 github.com/krakendio/flatmap v1.1.1 h1:rGBNVpBY0pMk6cLOwerVzoKY4HELnpu0xvqB231lOCQ=
 github.com/krakendio/flatmap v1.1.1/go.mod h1:KBuVkiH5BcBFRa5A1HdSHDn8a8LzsyRTKZArX0vqTbo=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=

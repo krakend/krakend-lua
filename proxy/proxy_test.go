@@ -19,6 +19,238 @@ import (
 	"github.com/luraproject/lura/v2/transport/http/client"
 )
 
+func TestProxyFactory_luaError(t *testing.T) {
+	var luaErrorTestTable = []struct {
+		Name          string
+		Cfg           map[string]interface{}
+		ExpectedError string
+	}{
+		{
+			Name: "Pre: Syntax error",
+			Cfg: map[string]interface{}{
+				"pre": "local req = request.load()\nlokal a = 1()\nlocal b = 2",
+			},
+			ExpectedError: "'a': parse error (pre-script:L2)",
+		},
+		{
+			Name: "Pre: Inline syntax error",
+			Cfg: map[string]interface{}{
+				"pre": "local req = request.load();lokal a = 1();local b = 2",
+			},
+			ExpectedError: "'a': parse error (pre-script:L1)",
+		},
+		{
+			Name: "Pre: Inline semicolon separated",
+			Cfg: map[string]interface{}{
+				"pre": "local req = request.load();method_does_not_exist();local test = 1",
+			},
+			ExpectedError: "attempt to call a non-function object (pre-script:L1)",
+		},
+		{
+			Name: "Pre: Inline",
+			Cfg: map[string]interface{}{
+				"pre": "local req = request.load()\nmethod_does_not_exist()\nlocal test = 1",
+			},
+			ExpectedError: "attempt to call a non-function object (pre-script:L2)",
+		},
+		{
+			Name: "Pre: Multiline",
+			Cfg: map[string]interface{}{
+				"pre": `local req = request.load()
+						req:method("POST")
+						req:params("foo", "some_new_value")
+						req:headers("Accept", "application/xml")
+						req:url(req:url() .. "&more=true")
+						reqw:body(req:body() .. " foo" .. req:headers("unknown")) -- fat-fingered`,
+			},
+			ExpectedError: "attempt to index a non-table object(nil) with key 'body' (pre-script:L6)",
+		},
+		{
+			Name: "Pre: Empty custom_error",
+			Cfg: map[string]interface{}{
+				"pre": "custom_error()",
+			},
+			ExpectedError: "need arguments (pre-script:L1)",
+		},
+		{
+			Name: "Pre: Single source with bad code",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../lua/bad-code.lua",
+				},
+				"pre": "custom_error(\"wont reach here\")",
+			},
+			ExpectedError: "attempt to index a non-table object(function) with key 'really_bad' (bad-code.lua:L5)",
+		},
+		{
+			Name: "Pre: Single source with bad method implementation",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../lua/bad-func.lua",
+				},
+				"pre": "badfunc(1)",
+			},
+			ExpectedError: "attempt to call a non-function object (bad-func.lua:L3)",
+		},
+		{
+			Name: "Pre: Multiple sources",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../lua/factorial.lua",
+					"../lua/bad-code.lua",
+					"../lua/add.lua",
+				},
+				"pre": "custom_error(\"wont reach here\")",
+			},
+			ExpectedError: "attempt to index a non-table object(function) with key 'really_bad' (bad-code.lua:L5)",
+		},
+		{
+			Name: "Pre: Multiple sources, bad function call",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../lua/env.lua",
+					"../lua/factorial.lua",
+					"../lua/bad-func.lua",
+					"../lua/add.lua",
+				},
+				"pre": "badfunc(1)",
+			},
+			ExpectedError: "attempt to call a non-function object (bad-func.lua:L3)",
+		},
+		{
+			Name: "Post: Inline syntax error",
+			Cfg: map[string]interface{}{
+				"post": "local req = request.load();lokal a = 1();local b = 2",
+			},
+			ExpectedError: "'a': parse error (post-script:L1)",
+		},
+		{
+			Name: "Post: Inline semicolon separated",
+			Cfg: map[string]interface{}{
+				"post": "local req = request.load();method_does_not_exist();local test = 1",
+			},
+			ExpectedError: "attempt to call a non-function object (post-script:L1)",
+		},
+		{
+			Name: "Post: Inline",
+			Cfg: map[string]interface{}{
+				"post": "local req = request.load()\nmethod_does_not_exist()\nlocal test = 1",
+			},
+			ExpectedError: "attempt to call a non-function object (post-script:L2)",
+		},
+		{
+			Name: "Post: Multiline",
+			Cfg: map[string]interface{}{
+				"post": `local resp = response.load()
+						local responseData = resp:data()
+						local data = {}
+						local col = responseDataBad:get("items")`,
+			},
+			ExpectedError: "attempt to index a non-table object(nil) with key 'get' (post-script:L4)",
+		},
+		{
+			Name: "Post: Empty custom_error",
+			Cfg: map[string]interface{}{
+				"post": "custom_error()",
+			},
+			ExpectedError: "need arguments (post-script:L1)",
+		},
+		{
+			Name: "Post: Single source with bad code",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../lua/bad-code.lua",
+				},
+				"post": "custom_error(\"wont reach here\")",
+			},
+			ExpectedError: "attempt to index a non-table object(function) with key 'really_bad' (bad-code.lua:L5)",
+		},
+		{
+			Name: "Post: Single source with bad method implementation",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../lua/bad-func.lua",
+				},
+				"post": "badfunc(1)",
+			},
+			ExpectedError: "attempt to call a non-function object (bad-func.lua:L3)",
+		},
+		{
+			Name: "Post: Multiple sources",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../lua/factorial.lua",
+					"../lua/bad-code.lua",
+					"../lua/add.lua",
+				},
+				"post": "custom_error(\"wont reach here\")",
+			},
+			ExpectedError: "attempt to index a non-table object(function) with key 'really_bad' (bad-code.lua:L5)",
+		},
+		{
+			Name: "Post: Multiple sources, bad function call",
+			Cfg: map[string]interface{}{
+				"sources": []interface{}{
+					"../lua/env.lua",
+					"../lua/factorial.lua",
+					"../lua/bad-func.lua",
+					"../lua/add.lua",
+				},
+				"post": "badfunc(1)",
+			},
+			ExpectedError: "attempt to call a non-function object (bad-func.lua:L3)",
+		},
+	}
+
+	for _, test := range luaErrorTestTable {
+		t.Run(test.Name, func(t *testing.T) {
+			logger, err := logging.NewLogger("ERROR", bytes.NewBuffer(make([]byte, 1024)), "pref")
+			if err != nil {
+				t.Error("building the logger:", err.Error())
+				return
+			}
+
+			explosive := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
+				return func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
+					return &proxy.Response{}, nil
+				}, nil
+			})
+
+			prxy, err := ProxyFactory(logger, explosive).New(&config.EndpointConfig{
+				Endpoint: "/",
+				ExtraConfig: config.ExtraConfig{
+					ProxyNamespace: test.Cfg,
+				},
+			})
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			URL, _ := url.Parse("https://some.host.tld/path/to/resource?and=querystring")
+
+			resp, err := prxy(context.Background(), &proxy.Request{
+				Method:  "GET",
+				Path:    "/some-path",
+				Params:  map[string]string{"Id": "42"},
+				Headers: map[string][]string{},
+				URL:     URL,
+				Body:    io.NopCloser(strings.NewReader("initial req content")),
+			})
+
+			if resp != nil {
+				t.Errorf("unexpected response: %v", resp)
+				return
+			}
+
+			if e := err.Error(); e != test.ExpectedError {
+				t.Errorf("unexpected error, have: '%s', want: '%s' (%T)", e, test.ExpectedError, err)
+				return
+			}
+		})
+	}
+}
+
 func TestProxyFactory_error(t *testing.T) {
 	testProxyFactoryError(t, `custom_error('expect me')`, "expect me", "", false, 0)
 	testProxyFactoryPostError(t, `custom_error('expect me')`, "expect me", "", false, 0)

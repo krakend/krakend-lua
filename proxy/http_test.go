@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 
 	"github.com/krakendio/binder"
+	lua "github.com/krakendio/krakend-lua/v2"
 )
 
 func Example_RegisterBackendModule() {
@@ -26,18 +27,17 @@ func Example_RegisterBackendModule() {
 	}))
 	defer ts.Close()
 
-	bindr := binder.New(binder.Options{
+	bindr := lua.NewBinderWrapper(binder.Options{
 		SkipOpenLibs:        true,
 		IncludeGoStackTrace: true,
 	})
 
-	registerHTTPRequest(context.Background(), bindr)
+	registerHTTPRequest(context.Background(), bindr.GetBinder())
 
 	code := fmt.Sprintf("local url = '%s'\n%s", ts.URL, sampleLuaCode)
 
-	if err := bindr.DoString(code); err != nil {
-		fmt.Println(err.(*binder.Error).Error())
-		err.(*binder.Error).Print()
+	if err := bindr.WithCode("test-code", code); err != nil {
+		fmt.Println(err.Error())
 	}
 
 	// output:
