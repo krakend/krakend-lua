@@ -55,6 +55,16 @@ func BackendFactory(l logging.Logger, bf proxy.BackendFactory) proxy.BackendFact
 	}
 }
 
+type registerer struct {
+	decorators []func(*binder.Binder)
+}
+
+var localRegisterer = registerer{decorators: []func(*binder.Binder){}}
+
+func RegisterDecorator(f func(*binder.Binder)) {
+	localRegisterer.decorators = append(localRegisterer.decorators, f)
+}
+
 func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 	return func(ctx context.Context, req *proxy.Request) (resp *proxy.Response, err error) {
 		b := lua.NewBinderWrapper(binder.Options{
@@ -87,6 +97,10 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 
 		registerResponseTable(resp, b.GetBinder())
 		registerJson(b.GetBinder())
+
+		for _, f := range localRegisterer.decorators {
+			f(b.GetBinder())
+		}
 
 		if err := b.WithCode("post-script", cfg.PostCode); err != nil {
 			return nil, err

@@ -36,9 +36,9 @@ func fromJson(c *binder.Context) error {
 	case bool:
 		c.Push().Bool(v)
 	case []interface{}:
-		c.Push().Data(&luaList{data: v}, "luaList")
+		c.Push().Data(&List{Data: v}, "luaList")
 	case map[string]interface{}:
-		c.Push().Data(&luaTable{data: v}, "luaTable")
+		c.Push().Data(&Table{Data: v}, "luaTable")
 	}
 	return nil
 }
@@ -65,10 +65,10 @@ func toJson(c *binder.Context) error {
 			return marshal(c, nil)
 		} else {
 			switch v := t.Value.(type) {
-			case *luaTable:
-				return marshal(c, v.data)
-			case *luaList:
-				return marshal(c, v.data)
+			case *Table:
+				return marshal(c, v.Data)
+			case *List:
+				return marshal(c, v.Data)
 			}
 		}
 	}
