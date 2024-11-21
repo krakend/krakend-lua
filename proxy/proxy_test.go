@@ -648,11 +648,11 @@ func TestProxyFactory(t *testing.T) {
 		"bar": 120,
 		"collection_size": 3,
 		"foobar": true,
-		"ids": {
-			"1": 1,
-			"2": 42,
-			"3": 0
-		},
+		"ids": [
+			1,
+			42,
+			0
+		],
 		"supu": {
 			"original": true,
 			"tupu": "some"

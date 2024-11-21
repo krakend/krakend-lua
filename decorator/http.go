@@ -1,4 +1,4 @@
-package proxy
+package decorator
 
 import (
 	"bytes"
@@ -9,12 +9,12 @@ import (
 	"sync"
 
 	"github.com/krakendio/binder"
-	lua "github.com/yuin/gopher-lua"
+	lua "github.com/krakendio/krakend-lua/v2"
 
 	"github.com/luraproject/lura/v2/transport/http/server"
 )
 
-func registerHTTPRequest(ctx context.Context, b *binder.Binder) {
+func RegisterHTTPRequest(ctx context.Context, b *binder.Binder) {
 	t := b.Table("http_response")
 
 	t.Static("new", newHttpResponse(ctx))
@@ -50,10 +50,10 @@ func newHttpResponse(ctx context.Context) func(*binder.Context) error {
 			}
 
 			if c.Top() == 4 {
-				headers, ok := c.Arg(4).Any().(*lua.LTable)
+				headers, ok := c.Arg(4).Any().(*lua.NativeTable)
 
 				if ok {
-					headers.ForEach(func(key, value lua.LValue) {
+					headers.ForEach(func(key, value lua.NativeValue) {
 						req.Header.Add(key.String(), value.String())
 					})
 				}
@@ -65,7 +65,7 @@ func newHttpResponse(ctx context.Context) func(*binder.Context) error {
 			return err
 		}
 		if resp == nil {
-			return errResponseExpected
+			return ErrResponseExpected
 		}
 		pushHTTPResponse(c, resp)
 		return nil
@@ -118,7 +118,7 @@ func pushHTTPResponse(c *binder.Context, r *http.Response) {
 func httpStatus(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*httpResponse)
 	if !ok {
-		return errResponseExpected
+		return ErrResponseExpected
 	}
 	c.Push().Number(float64(resp.r.StatusCode))
 
@@ -128,10 +128,10 @@ func httpStatus(c *binder.Context) error {
 func httpHeaders(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*httpResponse)
 	if !ok {
-		return errResponseExpected
+		return ErrResponseExpected
 	}
 	if c.Top() != 2 {
-		return errNeedsArguments
+		return ErrNeedsArguments
 	}
 	c.Push().String(resp.Header(c.Arg(2).String()))
 
@@ -141,7 +141,7 @@ func httpHeaders(c *binder.Context) error {
 func httpBody(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*httpResponse)
 	if !ok {
-		return errResponseExpected
+		return ErrResponseExpected
 	}
 	c.Push().String(resp.Body())
 
@@ -151,7 +151,7 @@ func httpBody(c *binder.Context) error {
 func httpClose(c *binder.Context) error {
 	resp, ok := c.Arg(1).Data().(*httpResponse)
 	if !ok {
-		return errResponseExpected
+		return ErrResponseExpected
 	}
 	if resp == nil {
 		return nil

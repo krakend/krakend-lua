@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/krakendio/binder"
 	lua "github.com/krakendio/krakend-lua/v2"
+	"github.com/krakendio/krakend-lua/v2/decorator"
 	"github.com/krakendio/krakend-lua/v2/router"
 	"github.com/luraproject/lura/v2/config"
 	"github.com/luraproject/lura/v2/logging"
@@ -89,7 +90,7 @@ func process(c *gin.Context, cfg *lua.Config) error {
 	})
 	defer b.GetBinder().Close()
 
-	lua.RegisterErrors(b.GetBinder())
+	decorator.RegisterErrors(b.GetBinder())
 	registerCtxTable(c, b.GetBinder())
 
 	if err := b.WithConfig(cfg); err != nil {

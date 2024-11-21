@@ -10,6 +10,7 @@ import (
 
 	"github.com/krakendio/binder"
 	lua "github.com/krakendio/krakend-lua/v2"
+	"github.com/krakendio/krakend-lua/v2/decorator"
 	"github.com/krakendio/krakend-lua/v2/router"
 	"github.com/luraproject/lura/v2/config"
 	"github.com/luraproject/lura/v2/logging"
@@ -100,7 +101,7 @@ func process(r *http.Request, pe mux.ParamExtractor, cfg *lua.Config) error {
 		IncludeGoStackTrace: true,
 	})
 
-	lua.RegisterErrors(b.GetBinder())
+	decorator.RegisterErrors(b.GetBinder())
 	registerRequestTable(r, pe, b.GetBinder())
 
 	if err := b.WithConfig(cfg); err != nil {

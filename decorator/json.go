@@ -1,13 +1,13 @@
-package proxy
+package decorator
 
 import (
 	"encoding/json"
 
 	"github.com/krakendio/binder"
-	lua "github.com/yuin/gopher-lua"
+	lua "github.com/krakendio/krakend-lua/v2"
 )
 
-func registerJson(b *binder.Binder) {
+func RegisterJson(b *binder.Binder) {
 	tab := b.Table("json")
 	tab.Static("unmarshal", fromJson)
 	tab.Static("marshal", toJson)
@@ -15,7 +15,7 @@ func registerJson(b *binder.Binder) {
 
 func fromJson(c *binder.Context) error {
 	if c.Top() != 1 {
-		return errNeedsArguments
+		return ErrNeedsArguments
 	}
 	data := new(interface{})
 	err := json.Unmarshal([]byte(c.Arg(1).String()), data)
@@ -36,38 +36,38 @@ func fromJson(c *binder.Context) error {
 	case bool:
 		c.Push().Bool(v)
 	case []interface{}:
-		c.Push().Data(&List{Data: v}, "luaList")
+		c.Push().Data(&lua.List{Data: v}, "luaList")
 	case map[string]interface{}:
-		c.Push().Data(&Table{Data: v}, "luaTable")
+		c.Push().Data(&lua.Table{Data: v}, "luaTable")
 	}
 	return nil
 }
 
 func toJson(c *binder.Context) error {
 	if c.Top() != 1 {
-		return errNeedsArguments
+		return ErrNeedsArguments
 	}
 	switch t := c.Arg(1).Any().(type) {
-	case lua.LString:
+	case lua.NativeString:
 		return marshal(c, c.Arg(1).String())
-	case lua.LNumber:
+	case lua.NativeNumber:
 		return marshal(c, c.Arg(1).Number())
-	case lua.LBool:
+	case lua.NativeBool:
 		return marshal(c, c.Arg(1).Bool())
-	case *lua.LTable:
+	case *lua.NativeTable:
 		res := map[string]interface{}{}
-		t.ForEach(func(k, v lua.LValue) {
-			parseToTable(k, v, res)
+		t.ForEach(func(k, v lua.NativeValue) {
+			lua.ParseToTable(k, v, res)
 		})
 		return marshal(c, res)
-	case *lua.LUserData:
+	case *lua.NativeUserData:
 		if t.Value == nil {
 			return marshal(c, nil)
 		} else {
 			switch v := t.Value.(type) {
-			case *Table:
+			case *lua.Table:
 				return marshal(c, v.Data)
-			case *List:
+			case *lua.List:
 				return marshal(c, v.Data)
 			}
 		}
