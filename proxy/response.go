@@ -11,7 +11,7 @@ import (
 )
 
 func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
-	r := &response{resp}
+	r := &ProxyResponse{resp}
 	if r.Metadata.Headers == nil {
 		r.Metadata.Headers = map[string][]string{}
 	}
@@ -33,14 +33,14 @@ func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
 	t.Dynamic("body", r.body)
 }
 
-type response struct {
+type ProxyResponse struct {
 	*proxy.Response
 }
 
 var errResponseExpected = errors.New("response expected")
 
-func (*response) isComplete(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*response)
+func (*ProxyResponse) isComplete(c *binder.Context) error {
+	resp, ok := c.Arg(1).Data().(*ProxyResponse)
 	if !ok {
 		return errResponseExpected
 	}
@@ -54,8 +54,8 @@ func (*response) isComplete(c *binder.Context) error {
 	return nil
 }
 
-func (*response) statusCode(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*response)
+func (*ProxyResponse) statusCode(c *binder.Context) error {
+	resp, ok := c.Arg(1).Data().(*ProxyResponse)
 	if !ok {
 		return errResponseExpected
 	}
@@ -69,8 +69,8 @@ func (*response) statusCode(c *binder.Context) error {
 	return nil
 }
 
-func (*response) headers(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*response)
+func (*ProxyResponse) headers(c *binder.Context) error {
+	resp, ok := c.Arg(1).Data().(*ProxyResponse)
 	if !ok {
 		return errResponseExpected
 	}
@@ -91,8 +91,8 @@ func (*response) headers(c *binder.Context) error {
 	return nil
 }
 
-func (*response) body(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*response)
+func (*ProxyResponse) body(c *binder.Context) error {
+	resp, ok := c.Arg(1).Data().(*ProxyResponse)
 	if !ok {
 		return errResponseExpected
 	}
@@ -112,8 +112,8 @@ func (*response) body(c *binder.Context) error {
 	return nil
 }
 
-func (*response) data(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*response)
+func (*ProxyResponse) data(c *binder.Context) error {
+	resp, ok := c.Arg(1).Data().(*ProxyResponse)
 	if !ok {
 		return errResponseExpected
 	}

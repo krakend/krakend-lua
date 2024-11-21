@@ -12,7 +12,7 @@ import (
 )
 
 func registerRequestTable(req *proxy.Request, b *binder.Binder) {
-	r := &request{req}
+	r := &ProxyRequest{req}
 
 	t := b.Table("request")
 
@@ -30,14 +30,14 @@ func registerRequestTable(req *proxy.Request, b *binder.Binder) {
 	t.Dynamic("body", r.body)
 }
 
-type request struct {
+type ProxyRequest struct {
 	*proxy.Request
 }
 
 var errRequestExpected = errors.New("request expected")
 
-func (*request) method(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*request)
+func (*ProxyRequest) method(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ProxyRequest)
 	if !ok {
 		return errRequestExpected
 	}
@@ -51,8 +51,8 @@ func (*request) method(c *binder.Context) error {
 	return nil
 }
 
-func (*request) path(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*request)
+func (*ProxyRequest) path(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ProxyRequest)
 	if !ok {
 		return errRequestExpected
 	}
@@ -66,8 +66,8 @@ func (*request) path(c *binder.Context) error {
 	return nil
 }
 
-func (*request) query(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*request)
+func (*ProxyRequest) query(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ProxyRequest)
 	if !ok {
 		return errRequestExpected
 	}
@@ -81,8 +81,8 @@ func (*request) query(c *binder.Context) error {
 	return nil
 }
 
-func (*request) url(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*request)
+func (*ProxyRequest) url(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ProxyRequest)
 	if !ok {
 		return errRequestExpected
 	}
@@ -101,8 +101,8 @@ func (*request) url(c *binder.Context) error {
 	return nil
 }
 
-func (*request) params(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*request)
+func (*ProxyRequest) params(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ProxyRequest)
 	if !ok {
 		return errRequestExpected
 	}
@@ -118,8 +118,8 @@ func (*request) params(c *binder.Context) error {
 	return nil
 }
 
-func (*request) headers(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*request)
+func (*ProxyRequest) headers(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ProxyRequest)
 	if !ok {
 		return errRequestExpected
 	}
@@ -142,8 +142,8 @@ func (*request) headers(c *binder.Context) error {
 	return nil
 }
 
-func (*request) body(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*request)
+func (*ProxyRequest) body(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ProxyRequest)
 	if !ok {
 		return errRequestExpected
 	}
