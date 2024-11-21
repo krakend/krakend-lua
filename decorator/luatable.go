@@ -2,7 +2,6 @@ package decorator
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 
@@ -65,7 +64,7 @@ func tableGet(c *binder.Context) error {
 		d["name"] = t.Name()
 		c.Push().Data(&lua.Table{Data: d}, "luaTable")
 	default:
-		return errors.New(fmt.Sprintf("unknown type (%T) %v", t, t))
+		return fmt.Errorf("unknown type (%T) %v", t, t)
 	}
 
 	return nil

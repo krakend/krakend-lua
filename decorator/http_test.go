@@ -11,7 +11,7 @@ import (
 	"github.com/krakendio/binder"
 )
 
-func Example_RegisterBackendModule() {
+func ExampleRegisterHTTPRequest() {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		headers, _ := json.Marshal(r.Header)
 		fmt.Println(string(headers))

@@ -77,7 +77,7 @@ func tryConvertToArray(input map[string]interface{}) ([]interface{}, error) {
 
 	sort.Ints(keys)
 
-	result := []interface{}{}
+	var result []interface{}
 	for _, k := range keys {
 		result = append(result, values[k])
 	}
