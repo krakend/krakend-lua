@@ -62,6 +62,20 @@ func ParseToTable(k, v NativeValue, acc map[string]interface{}) {
 	}
 }
 
+func MapNativeTable(t *NativeTable) (map[string]interface{}, []interface{}) {
+	res := map[string]interface{}{}
+	t.ForEach(func(k, v NativeValue) {
+		ParseToTable(k, v, res)
+	})
+
+	// Check if all the keys are integers and convert to array
+	at, err := tryConvertToArray(res)
+	if err == nil {
+		return nil, at
+	}
+	return res, nil
+}
+
 func tryConvertToArray(input map[string]interface{}) ([]interface{}, error) {
 	keys := make([]int, 0, len(input))
 	values := map[int]interface{}{}
