@@ -79,7 +79,6 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 		decorator.RegisterLuaTable(b.GetBinder())
 		decorator.RegisterLuaList(b.GetBinder())
 		decorator.RegisterHTTPRequest(ctx, b.GetBinder())
-		decorator.RegisterJson(b.GetBinder())
 		for _, f := range localRegisterer.decorators {
 			f(b.GetBinder())
 		}

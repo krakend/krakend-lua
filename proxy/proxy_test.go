@@ -556,7 +556,6 @@ func TestProxyFactory(t *testing.T) {
 		responseData:set("bar", bar)
 		responseData:set("keys", responseData:keys())
 		responseData:del("to_be_removed")
-		responseData:set("json", json.marshal(responseData:keys()))
 
 		if responseData:keyExists("to_be_removed")
 		then
@@ -635,7 +634,6 @@ func TestProxyFactory(t *testing.T) {
 		}
 	],
 	"foo": "some_new_value",
-	"json": "[\n\t\"bar\",\n\t\"collection\",\n\t\"foo\",\n\t\"keys\",\n\t\"more\",\n\t\"ok\"\n]",
 	"keys": [
 		"bar",
 		"collection",
