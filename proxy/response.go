@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"net/http"
 
 	"github.com/krakendio/binder"
 	lua "github.com/krakendio/krakend-lua/v2"
@@ -85,7 +86,7 @@ func (*ProxyResponse) headers(c *binder.Context) error {
 			c.Push().String(headers[0])
 		}
 	case 3:
-		resp.Metadata.Headers[c.Arg(2).String()] = []string{c.Arg(3).String()}
+		resp.Metadata.Headers[http.CanonicalHeaderKey(c.Arg(2).String())] = []string{c.Arg(3).String()}
 	}
 
 	return nil
