@@ -62,20 +62,7 @@ func ParseToTable(k, v NativeValue, acc map[string]interface{}) {
 	}
 }
 
-type MappedNativeTable struct {
-	data    interface{}
-	IsSlice bool
-}
-
-func (m *MappedNativeTable) GetData() map[string]interface{} {
-	return m.data.(map[string]interface{})
-}
-
-func (m *MappedNativeTable) GetDataAsSlice() []interface{} {
-	return m.data.([]interface{})
-}
-
-func MapNativeTable(t *NativeTable) *MappedNativeTable {
+func MapNativeTable(t *NativeTable) (interface{}, bool) {
 	res := map[string]interface{}{}
 	t.ForEach(func(k, v NativeValue) {
 		ParseToTable(k, v, res)
@@ -84,15 +71,9 @@ func MapNativeTable(t *NativeTable) *MappedNativeTable {
 	// Check if all the keys are integers and convert to slice
 	at, err := tryConvertToSlice(res)
 	if err == nil {
-		return &MappedNativeTable{
-			data:    at,
-			IsSlice: true,
-		}
+		return at, true
 	}
-	return &MappedNativeTable{
-		data:    res,
-		IsSlice: false,
-	}
+	return res, false
 }
 
 func tryConvertToSlice(input map[string]interface{}) ([]interface{}, error) {
