@@ -53,30 +53,49 @@ func ParseToTable(k, v NativeValue, acc map[string]interface{}) {
 		v.(*NativeTable).ForEach(func(k, v NativeValue) {
 			ParseToTable(k, v, res)
 		})
-		// Check if all the keys are integers and convert to array
+		// Check if all the keys are integers and convert to slice
 		acc[k.String()] = res
-		t, err := tryConvertToArray(res)
+		t, err := tryConvertToSlice(res)
 		if err == nil {
 			acc[k.String()] = t
 		}
 	}
 }
 
-func MapNativeTable(t *NativeTable) (map[string]interface{}, []interface{}) {
+type MappedNativeTable struct {
+	data    interface{}
+	IsSlice bool
+}
+
+func (m *MappedNativeTable) GetData() map[string]interface{} {
+	return m.data.(map[string]interface{})
+}
+
+func (m *MappedNativeTable) GetDataAsSlice() []interface{} {
+	return m.data.([]interface{})
+}
+
+func MapNativeTable(t *NativeTable) *MappedNativeTable {
 	res := map[string]interface{}{}
 	t.ForEach(func(k, v NativeValue) {
 		ParseToTable(k, v, res)
 	})
 
-	// Check if all the keys are integers and convert to array
-	at, err := tryConvertToArray(res)
+	// Check if all the keys are integers and convert to slice
+	at, err := tryConvertToSlice(res)
 	if err == nil {
-		return nil, at
+		return &MappedNativeTable{
+			data:    at,
+			IsSlice: true,
+		}
 	}
-	return res, nil
+	return &MappedNativeTable{
+		data:    res,
+		IsSlice: false,
+	}
 }
 
-func tryConvertToArray(input map[string]interface{}) ([]interface{}, error) {
+func tryConvertToSlice(input map[string]interface{}) ([]interface{}, error) {
 	keys := make([]int, 0, len(input))
 	values := map[int]interface{}{}
 
