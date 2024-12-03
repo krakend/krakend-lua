@@ -6,6 +6,7 @@ import (
 
 	"github.com/krakendio/binder"
 	lua "github.com/krakendio/krakend-lua/v2"
+	"github.com/krakendio/krakend-lua/v2/decorator"
 	"github.com/luraproject/lura/v2/config"
 	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"
@@ -56,12 +57,12 @@ func BackendFactory(l logging.Logger, bf proxy.BackendFactory) proxy.BackendFact
 }
 
 type registerer struct {
-	decorators []func(*binder.Binder)
+	decorators []decorator.Decorator
 }
 
-var localRegisterer = registerer{decorators: []func(*binder.Binder){}}
+var localRegisterer = registerer{decorators: []decorator.Decorator{}}
 
-func RegisterDecorator(f func(*binder.Binder)) {
+func RegisterDecorator(f decorator.Decorator) {
 	localRegisterer.decorators = append(localRegisterer.decorators, f)
 }
 
@@ -73,9 +74,15 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 		})
 		defer b.GetBinder().Close()
 
-		lua.RegisterErrors(b.GetBinder())
-		lua.RegisterNil(b.GetBinder())
-		registerHTTPRequest(ctx, b.GetBinder())
+		decorator.RegisterErrors(b.GetBinder())
+		decorator.RegisterNil(b.GetBinder())
+		decorator.RegisterLuaTable(b.GetBinder())
+		decorator.RegisterLuaList(b.GetBinder())
+		decorator.RegisterHTTPRequest(ctx, b.GetBinder())
+		for _, f := range localRegisterer.decorators {
+			f(b.GetBinder())
+		}
+
 		registerRequestTable(req, b.GetBinder())
 
 		if err := b.WithConfig(&cfg); err != nil {
@@ -96,11 +103,6 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 		}
 
 		registerResponseTable(resp, b.GetBinder())
-		registerJson(b.GetBinder())
-
-		for _, f := range localRegisterer.decorators {
-			f(b.GetBinder())
-		}
 
 		if err := b.WithCode("post-script", cfg.PostCode); err != nil {
 			return nil, err

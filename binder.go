@@ -6,6 +6,10 @@ import (
 	"github.com/krakendio/binder"
 )
 
+type Binder = binder.Binder
+type Context = binder.Context
+type Handler = binder.Handler
+
 type BinderWrapper struct {
 	binder    *binder.Binder
 	sourceMap *SourceMap

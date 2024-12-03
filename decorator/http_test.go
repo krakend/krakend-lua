@@ -1,4 +1,4 @@
-package proxy
+package decorator
 
 import (
 	"context"
@@ -9,10 +9,9 @@ import (
 	"net/http/httptest"
 
 	"github.com/krakendio/binder"
-	lua "github.com/krakendio/krakend-lua/v2"
 )
 
-func Example_RegisterBackendModule() {
+func ExampleRegisterHTTPRequest() {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		headers, _ := json.Marshal(r.Header)
 		fmt.Println(string(headers))
@@ -27,16 +26,16 @@ func Example_RegisterBackendModule() {
 	}))
 	defer ts.Close()
 
-	bindr := lua.NewBinderWrapper(binder.Options{
+	bindr := binder.New(binder.Options{
 		SkipOpenLibs:        true,
 		IncludeGoStackTrace: true,
 	})
 
-	registerHTTPRequest(context.Background(), bindr.GetBinder())
+	RegisterHTTPRequest(context.Background(), bindr)
 
 	code := fmt.Sprintf("local url = '%s'\n%s", ts.URL, sampleLuaCode)
 
-	if err := bindr.WithCode("test-code", code); err != nil {
+	if err := bindr.DoString(code); err != nil {
 		fmt.Println(err.Error())
 	}
 

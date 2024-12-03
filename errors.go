@@ -1,7 +1,6 @@
 package lua
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -28,8 +27,6 @@ type ErrUnknownSource string
 func (e ErrUnknownSource) Error() string {
 	return "lua: unable to load required source " + string(e)
 }
-
-var errNeedsArguments = errors.New("need arguments")
 
 type ErrInternal string
 
@@ -59,8 +56,6 @@ func (e ErrInternalHTTPWithContentType) Encoding() string {
 	return e.contentType
 }
 
-const separator = " || "
-
 func ToError(e error, source *SourceMap) error {
 	if e == nil {
 		return nil
@@ -73,7 +68,7 @@ func ToError(e error, source *SourceMap) error {
 
 	originalMsg := binderError.Error()
 	msgSplitIndex := strings.Index(originalMsg, ":")
-	errMsgParts := strings.Split(originalMsg[msgSplitIndex+2:], separator)
+	errMsgParts := strings.Split(originalMsg[msgSplitIndex+2:], " || ")
 
 	if len(errMsgParts) == 0 {
 		return binderError
@@ -113,19 +108,4 @@ func ToError(e error, source *SourceMap) error {
 		ErrInternalHTTP: errHTTP,
 		contentType:     errMsgParts[2],
 	}
-}
-
-func RegisterErrors(b *binder.Binder) {
-	b.Func("custom_error", func(c *binder.Context) error {
-		switch c.Top() {
-		case 0:
-			return errNeedsArguments
-		case 1:
-			return fmt.Errorf("%s%s%d", c.Arg(1).String(), separator, -1)
-		case 2:
-			return fmt.Errorf("%s%s%d", c.Arg(1).String(), separator, int(c.Arg(2).Number()))
-		default:
-			return fmt.Errorf("%s%s%d%s%s", c.Arg(1).String(), separator, int(c.Arg(2).Number()), separator, c.Arg(3).String())
-		}
-	})
 }
