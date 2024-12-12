@@ -478,8 +478,12 @@ func TestProxyFactory(t *testing.T) {
 			},
 			"to_be_removed": 123456,
 		},
-		Metadata: proxy.Metadata{},
-		Io:       strings.NewReader("initial resp content"),
+		Metadata: proxy.Metadata{
+			Headers: map[string][]string{
+				"X-Not-Needed": {"deleteme"},
+			},
+		},
+		Io: strings.NewReader("initial resp content"),
 	}
 
 	dummyProxyFactory := proxy.FactoryFunc(func(_ *config.EndpointConfig) (proxy.Proxy, error) {
@@ -492,6 +496,9 @@ func TestProxyFactory(t *testing.T) {
 			}
 			if req.Headers["Accept"][0] != "application/xml" {
 				t.Errorf("unexpected header 'Accept' %v", req.Headers["Accept"])
+			}
+			if _, found := req.Headers["X-To-Delete"]; found {
+				t.Error("unexpected header 'X-To-Delete', should have been deleted")
 			}
 			if req.URL.String() != "https://some.host.tld/path/to/resource?and=querystring&more=true" {
 				t.Errorf("unexpected URL: %s", req.URL.String())
@@ -522,6 +529,7 @@ func TestProxyFactory(t *testing.T) {
 		req:method("POST")
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
+		req:headers("X-To-Delete", nil)
 		req:url(req:url() .. "&more=true")
 		req:body(req:body() .. " foo" .. req:headers("unknown"))`,
 
@@ -568,6 +576,7 @@ func TestProxyFactory(t *testing.T) {
 		end
 
 		resp:headers("Content-Type", "application/xml")
+		resp:headers("X-Not-Needed", nil)
 		resp:statusCode(200)
 		resp:body(resp:body() .. " bar" .. resp:headers("unknown"))`,
 			},
@@ -579,12 +588,14 @@ func TestProxyFactory(t *testing.T) {
 	}
 
 	resp, err := prxy(context.Background(), &proxy.Request{
-		Method:  "GET",
-		Path:    "/some-path",
-		Params:  map[string]string{"Id": "42"},
-		Headers: map[string][]string{},
-		URL:     URL,
-		Body:    io.NopCloser(strings.NewReader("initial req content")),
+		Method: "GET",
+		Path:   "/some-path",
+		Params: map[string]string{"Id": "42"},
+		Headers: map[string][]string{
+			"X-To-Delete": {"deleteme"},
+		},
+		URL:  URL,
+		Body: io.NopCloser(strings.NewReader("initial req content")),
 	})
 	if err != nil {
 		t.Errorf("unexpected error %s", err.Error())
@@ -592,6 +603,10 @@ func TestProxyFactory(t *testing.T) {
 	}
 	if resp.Metadata.StatusCode != 200 {
 		t.Errorf("unexpected status code %d", resp.Metadata.StatusCode)
+		return
+	}
+	if _, found := resp.Metadata.Headers["X-Not-Needed"]; found {
+		t.Error("unexpected response header 'X-Not-Needed', should have been deleted")
 		return
 	}
 	if !resp.IsComplete {
