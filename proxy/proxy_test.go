@@ -447,7 +447,7 @@ func testProxyFactoryPostError(t *testing.T, code, errMsg, contentType string, i
 	}
 }
 
-func TestProxyFactory(t *testing.T) {
+func TestProxyFactory(t *testing.T) { // skipcq: GO-R1005
 	buff := bytes.NewBuffer(make([]byte, 1024))
 	logger, err := logging.NewLogger("ERROR", buff, "pref")
 	if err != nil {
