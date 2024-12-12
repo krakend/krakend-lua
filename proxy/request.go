@@ -9,6 +9,7 @@ import (
 
 	"github.com/krakendio/binder"
 	"github.com/luraproject/lura/v2/proxy"
+	glua "github.com/yuin/gopher-lua"
 )
 
 func registerRequestTable(req *proxy.Request, b *binder.Binder) {
@@ -136,6 +137,12 @@ func (*ProxyRequest) headers(c *binder.Context) error {
 		}
 	case 3:
 		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
+
+		_, isNil := c.Arg(3).Any().(*glua.LNilType)
+		if isNil {
+			delete(req.Headers, key)
+			return nil
+		}
 		req.Headers[key] = []string{c.Arg(3).String()}
 	}
 

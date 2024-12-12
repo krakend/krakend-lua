@@ -9,6 +9,7 @@ import (
 	"github.com/krakendio/binder"
 	lua "github.com/krakendio/krakend-lua/v2"
 	"github.com/luraproject/lura/v2/proxy"
+	glua "github.com/yuin/gopher-lua"
 )
 
 func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
@@ -86,7 +87,14 @@ func (*ProxyResponse) headers(c *binder.Context) error {
 			c.Push().String(headers[0])
 		}
 	case 3:
-		resp.Metadata.Headers[http.CanonicalHeaderKey(c.Arg(2).String())] = []string{c.Arg(3).String()}
+		key := http.CanonicalHeaderKey(c.Arg(2).String())
+
+		_, isNil := c.Arg(3).Any().(*glua.LNilType)
+		if isNil {
+			delete(resp.Metadata.Headers, key)
+			return nil
+		}
+		resp.Metadata.Headers[key] = []string{c.Arg(3).String()}
 	}
 
 	return nil
