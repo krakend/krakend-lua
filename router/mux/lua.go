@@ -16,6 +16,7 @@ import (
 	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"
 	mux "github.com/luraproject/lura/v2/router/mux"
+	glua "github.com/yuin/gopher-lua"
 )
 
 func RegisterMiddleware(l logging.Logger, e config.ExtraConfig, pe mux.ParamExtractor, mws []mux.HandlerMiddleware) []mux.HandlerMiddleware {
@@ -202,6 +203,11 @@ func (*muxContext) headers(c *binder.Context) error {
 	case 2:
 		c.Push().String(req.Header.Get(c.Arg(2).String()))
 	case 3:
+		_, isNil := c.Arg(3).Any().(*glua.LNilType)
+		if isNil {
+			req.Header.Del(c.Arg(2).String())
+			return nil
+		}
 		req.Header.Set(c.Arg(2).String(), c.Arg(3).String())
 	}
 

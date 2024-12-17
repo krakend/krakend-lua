@@ -16,6 +16,7 @@ import (
 	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"
 	krakendgin "github.com/luraproject/lura/v2/router/gin"
+	glua "github.com/yuin/gopher-lua"
 )
 
 func Register(l logging.Logger, extraConfig config.ExtraConfig, engine *gin.Engine) {
@@ -223,6 +224,11 @@ func (*ginContext) requestHeaders(c *binder.Context) error {
 	case 2:
 		c.Push().String(req.Request.Header.Get(c.Arg(2).String()))
 	case 3:
+		_, isNil := c.Arg(3).Any().(*glua.LNilType)
+		if isNil {
+			req.Request.Header.Del(c.Arg(2).String())
+			return nil
+		}
 		req.Request.Header.Set(c.Arg(2).String(), c.Arg(3).String())
 	}
 

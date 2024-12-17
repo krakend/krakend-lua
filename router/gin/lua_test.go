@@ -27,6 +27,8 @@ func TestHandlerFactory(t *testing.T) {
 		req:method("POST")
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
+		req:headers("X-To-Delete", nil)
+		req:headers("X-TO-DELETE-LOWER", nil)
 		req:url(req:url() .. "&more=true")
 		req:host(req:host() .. ".newtld")
 		req:query("extra", "foo")
@@ -45,6 +47,12 @@ func TestHandlerFactory(t *testing.T) {
 			}
 			if accept := c.Request.Header.Get("Accept"); accept != "application/xml" {
 				t.Errorf("unexpected accept header: %s", accept)
+			}
+			if toDelete := c.Request.Header.Get("X-To-Delete"); len(toDelete) > 0 {
+				t.Error("unexpected header 'X-To-Delete', should have been deleted")
+			}
+			if toDeleteLower := c.Request.Header.Get("X-To-Delete-Lower"); len(toDeleteLower) > 0 {
+				t.Error("unexpected header 'X-To-Delete-Lower', should have been deleted")
 			}
 			if c.Request.Method != "POST" {
 				t.Errorf("unexpected method: %s", c.Request.Method)
@@ -76,6 +84,8 @@ func TestHandlerFactory(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/some-path/42?id=1", http.NoBody)
 	req.Host = "domain.tld"
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("X-To-Delete", "deleteme")
+	req.Header.Set("x-to-delete-lower", "deleteme")
 	w := httptest.NewRecorder()
 
 	engine.ServeHTTP(w, req)
