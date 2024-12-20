@@ -28,6 +28,10 @@ func TestHandlerFactory(t *testing.T) {
 		req:headers("Accept", "application/xml")
 		req:headers("X-To-Delete", nil)
 		req:headers("X-TO-DELETE-LOWER", nil)
+		local multi = luaList.new()
+		multi:set(0, "A")
+		multi:set(1, "B")
+		req:headerList("X-Multi", multi)
 		req:url(req:url() .. "&more=true")
 		req:query("extra", "foo")
 		req:body(req:body().."fooooooo")`,
@@ -42,6 +46,9 @@ func TestHandlerFactory(t *testing.T) {
 			}
 			if accept := r.Header.Get("Accept"); accept != "application/xml" {
 				t.Errorf("unexpected accept header: %s", accept)
+			}
+			if multi := r.Header.Values("X-Multi"); multi[0] != "A" || multi[1] != "B" {
+				t.Errorf("unexpected X-Multi header: %v", multi)
 			}
 			if toDelete := r.Header.Get("X-To-Delete"); len(toDelete) > 0 {
 				t.Error("unexpected header 'X-To-Delete', should have been deleted")

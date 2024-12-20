@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/textproto"
 	"net/url"
 
 	"github.com/krakendio/binder"
@@ -103,6 +104,9 @@ func process(r *http.Request, pe mux.ParamExtractor, cfg *lua.Config) error {
 	})
 
 	decorator.RegisterErrors(b.GetBinder())
+	decorator.RegisterNil(b.GetBinder())
+	decorator.RegisterLuaTable(b.GetBinder())
+	decorator.RegisterLuaList(b.GetBinder())
 	registerRequestTable(r, pe, b.GetBinder())
 
 	if err := b.WithConfig(cfg); err != nil {
@@ -130,6 +134,7 @@ func registerRequestTable(r *http.Request, pe mux.ParamExtractor, b *binder.Bind
 	t.Dynamic("query", mctx.query)
 	t.Dynamic("params", mctx.params)
 	t.Dynamic("headers", mctx.headers)
+	t.Dynamic("headerList", mctx.headerList)
 	t.Dynamic("body", mctx.body)
 }
 
@@ -214,6 +219,46 @@ func (*muxContext) headers(c *binder.Context) error {
 	return nil
 }
 
+func (*muxContext) headerList(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*muxContext)
+	if !ok {
+		return errContextExpected
+	}
+	switch c.Top() {
+	case 1:
+		return errNeedsArguments
+	case 2:
+		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
+
+		headers := req.Header.Values(key)
+		d := make([]interface{}, len(headers))
+		for i := range headers {
+			d[i] = headers[i]
+		}
+		c.Push().Data(&lua.List{Data: d}, "luaList")
+	case 3:
+		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
+
+		v, isUserData := c.Arg(3).Any().(*glua.LUserData)
+		if !isUserData {
+			return errInvalidLuaList
+		}
+
+		list, isList := v.Value.(*lua.List)
+		if !isList {
+			return errInvalidLuaList
+		}
+
+		d := make([]string, len(list.Data))
+		for i := range list.Data {
+			d[i] = fmt.Sprintf("%s", list.Data[i])
+		}
+		req.Header[key] = d
+	}
+
+	return nil
+}
+
 func (*muxContext) body(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*muxContext)
 	if !ok {
@@ -239,4 +284,5 @@ func (*muxContext) body(c *binder.Context) error {
 var (
 	errNeedsArguments  = errors.New("need arguments")
 	errContextExpected = errors.New("muxContext expected")
+	errInvalidLuaList  = errors.New("invalid header value, must be a luaList")
 )
