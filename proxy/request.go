@@ -3,11 +3,13 @@ package proxy
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/textproto"
 	"net/url"
 
 	"github.com/krakendio/binder"
+	lua "github.com/krakendio/krakend-lua/v2"
 	"github.com/luraproject/lura/v2/proxy"
 	glua "github.com/yuin/gopher-lua"
 )
@@ -132,18 +134,35 @@ func (*ProxyRequest) headers(c *binder.Context) error {
 		headers := req.Headers[key]
 		if len(headers) == 0 {
 			c.Push().String("")
-		} else {
+		} else if len(headers) == 1 {
 			c.Push().String(headers[0])
+		} else {
+			d := make([]interface{}, len(headers))
+			for i := range headers {
+				d[i] = headers[i]
+			}
+			c.Push().Data(&lua.List{Data: d}, "luaList")
 		}
 	case 3:
 		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
 
-		_, isNil := c.Arg(3).Any().(*glua.LNilType)
-		if isNil {
+		switch v := c.Arg(3).Any().(type) {
+		case *glua.LNilType:
 			delete(req.Headers, key)
 			return nil
+		case *glua.LUserData:
+			list, isList := v.Value.(*lua.List)
+			if !isList {
+				return errors.New("invalid header value, must be a luaList")
+			}
+			d := make([]string, len(list.Data))
+			for i := range list.Data {
+				d[i] = fmt.Sprintf("%s", list.Data[i])
+			}
+			req.Headers[key] = d
+		default:
+			req.Headers[key] = []string{c.Arg(3).String()}
 		}
-		req.Headers[key] = []string{c.Arg(3).String()}
 	}
 
 	return nil
