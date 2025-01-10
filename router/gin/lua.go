@@ -3,8 +3,10 @@ package gin
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"net/textproto"
 	"net/url"
 
 	"github.com/gin-gonic/gin"
@@ -92,6 +94,9 @@ func process(c *gin.Context, cfg *lua.Config) error {
 	defer b.GetBinder().Close()
 
 	decorator.RegisterErrors(b.GetBinder())
+	decorator.RegisterNil(b.GetBinder())
+	decorator.RegisterLuaTable(b.GetBinder())
+	decorator.RegisterLuaList(b.GetBinder())
 	registerCtxTable(c, b.GetBinder())
 
 	if err := b.WithConfig(cfg); err != nil {
@@ -117,6 +122,7 @@ func registerCtxTable(c *gin.Context, b *binder.Binder) {
 	t.Dynamic("query", r.query)
 	t.Dynamic("params", r.params)
 	t.Dynamic("headers", r.requestHeaders)
+	t.Dynamic("headerList", r.headerList)
 	t.Dynamic("body", r.requestBody)
 }
 
@@ -235,6 +241,46 @@ func (*ginContext) requestHeaders(c *binder.Context) error {
 	return nil
 }
 
+func (*ginContext) headerList(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ginContext)
+	if !ok {
+		return errContextExpected
+	}
+	switch c.Top() {
+	case 1:
+		return errNeedsArguments
+	case 2:
+		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
+
+		headers := req.Request.Header.Values(key)
+		d := make([]interface{}, len(headers))
+		for i := range headers {
+			d[i] = headers[i]
+		}
+		c.Push().Data(&lua.List{Data: d}, "luaList")
+	case 3:
+		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
+
+		v, isUserData := c.Arg(3).Any().(*glua.LUserData)
+		if !isUserData {
+			return errInvalidLuaList
+		}
+
+		list, isList := v.Value.(*lua.List)
+		if !isList {
+			return errInvalidLuaList
+		}
+
+		d := make([]string, len(list.Data))
+		for i := range list.Data {
+			d[i] = fmt.Sprintf("%s", list.Data[i])
+		}
+		req.Request.Header[key] = d
+	}
+
+	return nil
+}
+
 func (*ginContext) requestBody(c *binder.Context) error {
 	req, ok := c.Arg(1).Data().(*ginContext)
 	if !ok {
@@ -260,4 +306,5 @@ func (*ginContext) requestBody(c *binder.Context) error {
 var (
 	errNeedsArguments  = errors.New("need arguments")
 	errContextExpected = errors.New("ginContext expected")
+	errInvalidLuaList  = errors.New("invalid header value, must be a luaList")
 )

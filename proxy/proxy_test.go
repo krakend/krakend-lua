@@ -105,6 +105,13 @@ func TestProxyFactory_luaError(t *testing.T) {
 			ExpectedError: "attempt to index a non-table object(function) with key 'really_bad' (bad-code.lua:L5)",
 		},
 		{
+			Name: "Pre: Invalid headerList value",
+			Cfg: map[string]interface{}{
+				"pre": `local req = request.load(); req:headerList("X-Test", "string")`,
+			},
+			ExpectedError: "invalid header value, must be a luaList (pre-script:L1)",
+		},
+		{
 			Name: "Pre: Multiple sources, bad function call",
 			Cfg: map[string]interface{}{
 				"sources": []interface{}{
@@ -199,6 +206,13 @@ func TestProxyFactory_luaError(t *testing.T) {
 				"post": "badfunc(1)",
 			},
 			ExpectedError: "attempt to call a non-function object (bad-func.lua:L3)",
+		},
+		{
+			Name: "Post: Invalid headerList value",
+			Cfg: map[string]interface{}{
+				"post": `local res = response.load(); res:headerList("X-Test", "string")`,
+			},
+			ExpectedError: "invalid header value, must be a luaList (post-script:L1)",
 		},
 	}
 
@@ -481,6 +495,7 @@ func TestProxyFactory(t *testing.T) { // skipcq: GO-R1005
 		Metadata: proxy.Metadata{
 			Headers: map[string][]string{
 				"X-Not-Needed": {"deleteme"},
+				"X-Multi-Res":  {"X", "Y"},
 			},
 		},
 		Io: strings.NewReader("initial resp content"),
@@ -496,6 +511,9 @@ func TestProxyFactory(t *testing.T) { // skipcq: GO-R1005
 			}
 			if req.Headers["Accept"][0] != "application/xml" {
 				t.Errorf("unexpected header 'Accept' %v", req.Headers["Accept"])
+			}
+			if req.Headers["X-Multi"][0] != "A" || req.Headers["X-Multi"][1] != "B" {
+				t.Errorf("unexpected header 'X-Multi' %v", req.Headers["X-Multi"])
 			}
 			if _, found := req.Headers["X-To-Delete"]; found {
 				t.Error("unexpected header 'X-To-Delete', should have been deleted")
@@ -530,6 +548,12 @@ func TestProxyFactory(t *testing.T) { // skipcq: GO-R1005
 		req:params("foo", "some_new_value")
 		req:headers("Accept", "application/xml")
 		req:headers("X-To-Delete", nil)
+
+		local multi_header = luaList.new()
+		multi_header:set(0, "A")
+		multi_header:set(1, "B")
+		req:headerList("X-Multi", multi_header)
+
 		req:url(req:url() .. "&more=true")
 		req:body(req:body() .. " foo" .. req:headers("unknown"))`,
 
@@ -577,6 +601,12 @@ func TestProxyFactory(t *testing.T) { // skipcq: GO-R1005
 
 		resp:headers("Content-Type", "application/xml")
 		resp:headers("X-Not-Needed", nil)
+
+		local res_header = luaList.new()
+		res_header:set(0, "X")
+		res_header:set(1, "Y")
+		resp:headerList("X-Multi-Res", res_header)
+
 		resp:statusCode(200)
 		resp:body(resp:body() .. " bar" .. resp:headers("unknown"))`,
 			},
@@ -615,6 +645,10 @@ func TestProxyFactory(t *testing.T) { // skipcq: GO-R1005
 	}
 	if resp.Metadata.Headers["Content-Type"][0] != "application/xml" {
 		t.Errorf("unexpected Content-Type %v", resp.Metadata.Headers["Content-Type"])
+		return
+	}
+	if resp.Metadata.Headers["X-Multi-Res"][0] != "X" || resp.Metadata.Headers["X-Multi-Res"][1] != "Y" {
+		t.Errorf("unexpected X-Multi-Res %v", resp.Metadata.Headers["X-Multi-Res"])
 		return
 	}
 	if v, ok := resp.Data["foo"].(string); !ok || v != "some_new_value" {

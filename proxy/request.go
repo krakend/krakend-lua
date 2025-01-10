@@ -3,11 +3,13 @@ package proxy
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/textproto"
 	"net/url"
 
 	"github.com/krakendio/binder"
+	lua "github.com/krakendio/krakend-lua/v2"
 	"github.com/luraproject/lura/v2/proxy"
 	glua "github.com/yuin/gopher-lua"
 )
@@ -28,6 +30,7 @@ func registerRequestTable(req *proxy.Request, b *binder.Binder) {
 	t.Dynamic("url", r.url)
 	t.Dynamic("params", r.params)
 	t.Dynamic("headers", r.headers)
+	t.Dynamic("headerList", r.headerList)
 	t.Dynamic("body", r.body)
 }
 
@@ -144,6 +147,46 @@ func (*ProxyRequest) headers(c *binder.Context) error {
 			return nil
 		}
 		req.Headers[key] = []string{c.Arg(3).String()}
+	}
+
+	return nil
+}
+
+func (*ProxyRequest) headerList(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*ProxyRequest)
+	if !ok {
+		return errRequestExpected
+	}
+	switch c.Top() {
+	case 1:
+		return errNeedsArguments
+	case 2:
+		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
+
+		headers := req.Headers[key]
+		d := make([]interface{}, len(headers))
+		for i := range headers {
+			d[i] = headers[i]
+		}
+		c.Push().Data(&lua.List{Data: d}, "luaList")
+	case 3:
+		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
+
+		v, isUserData := c.Arg(3).Any().(*glua.LUserData)
+		if !isUserData {
+			return errInvalidLuaList
+		}
+
+		list, isList := v.Value.(*lua.List)
+		if !isList {
+			return errInvalidLuaList
+		}
+
+		d := make([]string, len(list.Data))
+		for i := range list.Data {
+			d[i] = fmt.Sprintf("%s", list.Data[i])
+		}
+		req.Headers[key] = d
 	}
 
 	return nil

@@ -3,6 +3,7 @@ package proxy
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -32,6 +33,7 @@ func registerResponseTable(resp *proxy.Response, b *binder.Binder) {
 	t.Dynamic("statusCode", r.statusCode)
 	t.Dynamic("data", r.data)
 	t.Dynamic("headers", r.headers)
+	t.Dynamic("headerList", r.headerList)
 	t.Dynamic("body", r.body)
 }
 
@@ -95,6 +97,46 @@ func (*ProxyResponse) headers(c *binder.Context) error {
 			return nil
 		}
 		resp.Metadata.Headers[key] = []string{c.Arg(3).String()}
+	}
+
+	return nil
+}
+
+func (*ProxyResponse) headerList(c *binder.Context) error {
+	resp, ok := c.Arg(1).Data().(*ProxyResponse)
+	if !ok {
+		return errRequestExpected
+	}
+	switch c.Top() {
+	case 1:
+		return errNeedsArguments
+	case 2:
+		key := http.CanonicalHeaderKey(c.Arg(2).String())
+
+		headers := resp.Metadata.Headers[key]
+		d := make([]interface{}, len(headers))
+		for i := range headers {
+			d[i] = headers[i]
+		}
+		c.Push().Data(&lua.List{Data: d}, "luaList")
+	case 3:
+		key := http.CanonicalHeaderKey(c.Arg(2).String())
+
+		v, isUserData := c.Arg(3).Any().(*glua.LUserData)
+		if !isUserData {
+			return errInvalidLuaList
+		}
+
+		list, isList := v.Value.(*lua.List)
+		if !isList {
+			return errInvalidLuaList
+		}
+
+		d := make([]string, len(list.Data))
+		for i := range list.Data {
+			d[i] = fmt.Sprintf("%s", list.Data[i])
+		}
+		resp.Metadata.Headers[key] = d
 	}
 
 	return nil

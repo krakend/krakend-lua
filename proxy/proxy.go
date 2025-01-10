@@ -112,4 +112,7 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 	}
 }
 
-var errNeedsArguments = errors.New("need arguments")
+var (
+	errNeedsArguments = errors.New("need arguments")
+	errInvalidLuaList = errors.New("invalid header value, must be a luaList")
+)
