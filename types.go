@@ -2,8 +2,11 @@ package lua
 
 import (
 	"errors"
+	"io"
+	"net/http"
 	"sort"
 	"strconv"
+	"sync"
 
 	glua "github.com/yuin/gopher-lua"
 )
@@ -14,6 +17,38 @@ type Table struct {
 
 type List struct {
 	Data []interface{}
+}
+
+type HttpResponse struct {
+	Once *sync.Once
+	R    *http.Response
+	body string
+}
+
+func (h *HttpResponse) Close() {
+	if h == nil || h.R == nil || h.R.Body == nil {
+		return
+	}
+
+	h.R.Body.Close()
+	h.R.Body = nil
+}
+
+func (h *HttpResponse) Body() string {
+	h.Once.Do(func() {
+		b, _ := io.ReadAll(h.R.Body)
+		h.Close()
+		h.body = string(b)
+	})
+	return h.body
+}
+
+func (h *HttpResponse) Header(k string) string {
+	return h.R.Header.Get(k)
+}
+
+func (h *HttpResponse) Headers(k string) []string {
+	return h.R.Header.Values(k)
 }
 
 type NativeValue = glua.LValue
