@@ -21,6 +21,7 @@ func RegisterHTTPRequest(ctx context.Context, b *binder.Binder) {
 
 	t.Dynamic("statusCode", httpStatus)
 	t.Dynamic("headers", httpHeaders)
+	t.Dynamic("headerList", httpHeaderList)
 	t.Dynamic("body", httpBody)
 	t.Dynamic("close", httpClose)
 }
@@ -54,7 +55,14 @@ func newHttpResponse(ctx context.Context) func(*binder.Context) error {
 
 				if ok {
 					headers.ForEach(func(key, value lua.NativeValue) {
-						req.Header.Add(key.String(), value.String())
+						switch l := value.(type) {
+						case lua.NativeString:
+							req.Header.Add(key.String(), l.String())
+						case *lua.NativeTable:
+							l.ForEach(func(_, v lua.NativeValue) {
+								req.Header.Add(key.String(), v.String())
+							})
+						}
 					})
 				}
 			}
@@ -105,6 +113,10 @@ func (h *httpResponse) Header(k string) string {
 	return h.r.Header.Get(k)
 }
 
+func (h *httpResponse) Headers(k string) []string {
+	return h.r.Header.Values(k)
+}
+
 func pushHTTPResponse(c *binder.Context, r *http.Response) {
 	c.Push().Data(
 		&httpResponse{
@@ -134,6 +146,25 @@ func httpHeaders(c *binder.Context) error {
 		return ErrNeedsArguments
 	}
 	c.Push().String(resp.Header(c.Arg(2).String()))
+
+	return nil
+}
+
+func httpHeaderList(c *binder.Context) error {
+	resp, ok := c.Arg(1).Data().(*httpResponse)
+	if !ok {
+		return ErrResponseExpected
+	}
+	if c.Top() != 2 {
+		return ErrNeedsArguments
+	}
+
+	headers := resp.Headers(c.Arg(2).String())
+	d := make([]interface{}, len(headers))
+	for i := range headers {
+		d[i] = headers[i]
+	}
+	c.Push().Data(&lua.List{Data: d}, "luaList")
 
 	return nil
 }
