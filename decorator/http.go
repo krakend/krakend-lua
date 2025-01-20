@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
 	"net/http"
 	"sync"
 
@@ -85,60 +84,28 @@ func executeHttpRequest(r *http.Request) (*http.Response, error) {
 	return http.DefaultClient.Do(r)
 }
 
-type httpResponse struct {
-	once *sync.Once
-	r    *http.Response
-	body string
-}
-
-func (h *httpResponse) Close() {
-	if h == nil || h.r == nil || h.r.Body == nil {
-		return
-	}
-
-	h.r.Body.Close()
-	h.r.Body = nil
-}
-
-func (h *httpResponse) Body() string {
-	h.once.Do(func() {
-		b, _ := io.ReadAll(h.r.Body)
-		h.Close()
-		h.body = string(b)
-	})
-	return h.body
-}
-
-func (h *httpResponse) Header(k string) string {
-	return h.r.Header.Get(k)
-}
-
-func (h *httpResponse) Headers(k string) []string {
-	return h.r.Header.Values(k)
-}
-
 func pushHTTPResponse(c *binder.Context, r *http.Response) {
 	c.Push().Data(
-		&httpResponse{
-			once: new(sync.Once),
-			r:    r,
+		&lua.HttpResponse{
+			Once: new(sync.Once),
+			R:    r,
 		},
 		"http_response",
 	)
 }
 
 func httpStatus(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*httpResponse)
+	resp, ok := c.Arg(1).Data().(*lua.HttpResponse)
 	if !ok {
 		return ErrResponseExpected
 	}
-	c.Push().Number(float64(resp.r.StatusCode))
+	c.Push().Number(float64(resp.R.StatusCode))
 
 	return nil
 }
 
 func httpHeaders(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*httpResponse)
+	resp, ok := c.Arg(1).Data().(*lua.HttpResponse)
 	if !ok {
 		return ErrResponseExpected
 	}
@@ -151,7 +118,7 @@ func httpHeaders(c *binder.Context) error {
 }
 
 func httpHeaderList(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*httpResponse)
+	resp, ok := c.Arg(1).Data().(*lua.HttpResponse)
 	if !ok {
 		return ErrResponseExpected
 	}
@@ -170,7 +137,7 @@ func httpHeaderList(c *binder.Context) error {
 }
 
 func httpBody(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*httpResponse)
+	resp, ok := c.Arg(1).Data().(*lua.HttpResponse)
 	if !ok {
 		return ErrResponseExpected
 	}
@@ -180,7 +147,7 @@ func httpBody(c *binder.Context) error {
 }
 
 func httpClose(c *binder.Context) error {
-	resp, ok := c.Arg(1).Data().(*httpResponse)
+	resp, ok := c.Arg(1).Data().(*lua.HttpResponse)
 	if !ok {
 		return ErrResponseExpected
 	}
@@ -188,7 +155,7 @@ func httpClose(c *binder.Context) error {
 		return nil
 	}
 	resp.Close()
-	resp.r = nil
+	resp.R = nil
 	resp = nil
 	return nil
 }
