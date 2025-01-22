@@ -70,7 +70,6 @@ func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtra
 			if err := process(r, pe, &cfg); err != nil {
 				if errhttp, ok := err.(errHTTP); ok {
 					if e, ok := err.(errHTTPWithContentType); ok {
-						fmt.Println(e.Encoding())
 						w.Header().Add("content-type", e.Encoding())
 					}
 					w.WriteHeader(errhttp.StatusCode())
@@ -107,6 +106,7 @@ func process(r *http.Request, pe mux.ParamExtractor, cfg *lua.Config) error {
 	decorator.RegisterNil(b.GetBinder())
 	decorator.RegisterLuaTable(b.GetBinder())
 	decorator.RegisterLuaList(b.GetBinder())
+	decorator.RegisterHTTPRequest(r.Context(), b.GetBinder())
 	registerRequestTable(r, pe, b.GetBinder())
 
 	if err := b.WithConfig(cfg); err != nil {

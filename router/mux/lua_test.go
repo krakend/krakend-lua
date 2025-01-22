@@ -1,6 +1,7 @@
 package mux
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,14 @@ import (
 )
 
 func TestHandlerFactory(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.Header().Add("X-User-Id", "123456")
+
+		fmt.Fprintln(w, "{}")
+	}))
+	defer ts.Close()
+
 	cfg := &config.EndpointConfig{
 		Endpoint: "/",
 		ExtraConfig: config.ExtraConfig{
@@ -28,13 +37,18 @@ func TestHandlerFactory(t *testing.T) {
 		req:headers("Accept", "application/xml")
 		req:headers("X-To-Delete", nil)
 		req:headers("X-TO-DELETE-LOWER", nil)
+
 		local multi = luaList.new()
 		multi:set(0, "A")
 		multi:set(1, "B")
 		req:headerList("X-Multi", multi)
 		req:url(req:url() .. "&more=true")
 		req:query("extra", "foo")
-		req:body(req:body().."fooooooo")`,
+		req:body(req:body().."fooooooo")
+
+		local userReq = http_response.new('` + ts.URL + `')
+		req:headers("X-Acting-As", userReq:headers("X-User-Id"))
+		`,
 			},
 		},
 	}
@@ -46,6 +60,9 @@ func TestHandlerFactory(t *testing.T) {
 			}
 			if accept := r.Header.Get("Accept"); accept != "application/xml" {
 				t.Errorf("unexpected accept header: %s", accept)
+			}
+			if userId := r.Header.Get("X-Acting-As"); userId != "123456" {
+				t.Errorf("unexpected X-Acting-As header: %s", userId)
 			}
 			if multi := r.Header.Values("X-Multi"); multi[0] != "A" || multi[1] != "B" {
 				t.Errorf("unexpected X-Multi header: %v", multi)

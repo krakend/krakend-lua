@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"strings"
@@ -793,8 +792,6 @@ func Test_Issue7(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	fmt.Println(buff.String())
 }
 
 func Test_jsonNumber(t *testing.T) {
@@ -827,7 +824,6 @@ func Test_jsonNumber(t *testing.T) {
 				"post": `
 local resp = response.load()
 local responseData = resp:data()
-print(responseData:get("id"))
 responseData:set("id", responseData:get("id")+1)
 `,
 			},
