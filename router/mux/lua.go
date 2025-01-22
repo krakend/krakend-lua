@@ -2,7 +2,6 @@ package mux
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -107,7 +106,7 @@ func process(r *http.Request, pe mux.ParamExtractor, cfg *lua.Config) error {
 	decorator.RegisterNil(b.GetBinder())
 	decorator.RegisterLuaTable(b.GetBinder())
 	decorator.RegisterLuaList(b.GetBinder())
-	decorator.RegisterHTTPRequest(context.Background(), b.GetBinder())
+	decorator.RegisterHTTPRequest(r.Context(), b.GetBinder())
 	registerRequestTable(r, pe, b.GetBinder())
 
 	if err := b.WithConfig(cfg); err != nil {
