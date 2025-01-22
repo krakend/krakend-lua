@@ -97,6 +97,7 @@ func process(c *gin.Context, cfg *lua.Config) error {
 	decorator.RegisterNil(b.GetBinder())
 	decorator.RegisterLuaTable(b.GetBinder())
 	decorator.RegisterLuaList(b.GetBinder())
+	decorator.RegisterHTTPRequest(c.Request.Context(), b.GetBinder())
 	registerCtxTable(c, b.GetBinder())
 
 	if err := b.WithConfig(cfg); err != nil {
