@@ -204,7 +204,7 @@ func (*muxContext) headers(c *binder.Context) error {
 	}
 	switch c.Top() {
 	case 1:
-		return errNeedsArguments
+		c.Push().Data(lua.NewTableFromStringSliceMap(req.Request.Header), "luaTable")
 	case 2:
 		c.Push().String(req.Header.Get(c.Arg(2).String()))
 	case 3:

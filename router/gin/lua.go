@@ -203,7 +203,11 @@ func (*ginContext) params(c *binder.Context) error {
 	}
 	switch c.Top() {
 	case 1:
-		return errNeedsArguments
+		params := make(map[string]string)
+		for _, p := range req.Params {
+			params[p.Key] = p.Value
+		}
+		c.Push().Data(lua.NewTableFromStringMap(params), "luaTable")
 	case 2:
 		c.Push().String(req.Params.ByName(c.Arg(2).String()))
 	case 3:
@@ -227,7 +231,7 @@ func (*ginContext) requestHeaders(c *binder.Context) error {
 	}
 	switch c.Top() {
 	case 1:
-		return errNeedsArguments
+		c.Push().Data(lua.NewTableFromStringSliceMap(req.Request.Header), "luaTable")
 	case 2:
 		c.Push().String(req.Request.Header.Get(c.Arg(2).String()))
 	case 3:
