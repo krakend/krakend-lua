@@ -15,6 +15,26 @@ type Table struct {
 	Data map[string]interface{}
 }
 
+func NewTableFromStringMap(input map[string]string) *Table {
+	data := make(map[string]interface{})
+	for k, v := range input {
+		data[k] = v
+	}
+	return &Table{Data: data}
+}
+
+func NewTableFromStringSliceMap(input map[string][]string) *Table {
+	data := make(map[string]interface{})
+	for k, v := range input {
+		var list []interface{}
+		for i := range v {
+			list = append(list, v[i])
+		}
+		data[k] = list
+	}
+	return &Table{Data: data}
+}
+
 type List struct {
 	Data []interface{}
 }

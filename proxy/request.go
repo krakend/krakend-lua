@@ -112,7 +112,7 @@ func (*ProxyRequest) params(c *binder.Context) error {
 	}
 	switch c.Top() {
 	case 1:
-		return errNeedsArguments
+		c.Push().Data(lua.NewTableFromStringMap(req.Params), "luaTable")
 	case 2:
 		c.Push().String(req.Params[c.Arg(2).String()])
 	case 3:
@@ -129,7 +129,7 @@ func (*ProxyRequest) headers(c *binder.Context) error {
 	}
 	switch c.Top() {
 	case 1:
-		return errNeedsArguments
+		c.Push().Data(lua.NewTableFromStringSliceMap(req.Headers), "luaTable")
 	case 2:
 		key := textproto.CanonicalMIMEHeaderKey(c.Arg(2).String())
 		headers := req.Headers[key]
