@@ -35,6 +35,7 @@ func Register(l logging.Logger, extraConfig config.ExtraConfig, engine *gin.Engi
 
 	engine.Use(func(c *gin.Context) {
 		if err := process(c, &cfg); err != nil {
+			l.Error(logPrefix, err.Error())
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
@@ -67,6 +68,7 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 					c.AbortWithError(errhttp.StatusCode(), err)
 					return
 				}
+				l.Error(logPrefix, err.Error())
 				c.AbortWithError(http.StatusInternalServerError, err)
 				return
 			}
@@ -86,6 +88,16 @@ type errHTTPWithContentType interface {
 	Encoding() string
 }
 
+type registerer struct {
+	decorators []decorator.Decorator
+}
+
+var localRegisterer = registerer{decorators: []decorator.Decorator{}}
+
+func RegisterDecorator(f decorator.Decorator) {
+	localRegisterer.decorators = append(localRegisterer.decorators, f)
+}
+
 func process(c *gin.Context, cfg *lua.Config) error {
 	b := lua.NewBinderWrapper(binder.Options{
 		SkipOpenLibs:        !cfg.AllowOpenLibs,
@@ -98,6 +110,10 @@ func process(c *gin.Context, cfg *lua.Config) error {
 	decorator.RegisterLuaTable(b.GetBinder())
 	decorator.RegisterLuaList(b.GetBinder())
 	decorator.RegisterHTTPRequest(c, b.GetBinder())
+	for _, f := range localRegisterer.decorators {
+		f(b.GetBinder())
+	}
+
 	registerCtxTable(c, b.GetBinder())
 
 	if err := b.WithConfig(cfg); err != nil {
@@ -108,7 +124,7 @@ func process(c *gin.Context, cfg *lua.Config) error {
 }
 
 func registerCtxTable(c *gin.Context, b *binder.Binder) {
-	r := &ginContext{c}
+	r := &GinContext{c}
 
 	t := b.Table("ctx")
 
@@ -127,12 +143,12 @@ func registerCtxTable(c *gin.Context, b *binder.Binder) {
 	t.Dynamic("body", r.requestBody)
 }
 
-type ginContext struct {
+type GinContext struct {
 	*gin.Context
 }
 
-func (*ginContext) method(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*ginContext)
+func (*GinContext) method(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*GinContext)
 	if !ok {
 		return errContextExpected
 	}
@@ -146,8 +162,8 @@ func (*ginContext) method(c *binder.Context) error {
 	return nil
 }
 
-func (*ginContext) url(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*ginContext)
+func (*GinContext) url(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*GinContext)
 	if !ok {
 		return errContextExpected
 	}
@@ -161,8 +177,8 @@ func (*ginContext) url(c *binder.Context) error {
 	return nil
 }
 
-func (*ginContext) host(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*ginContext)
+func (*GinContext) host(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*GinContext)
 	if !ok {
 		return errContextExpected
 	}
@@ -176,8 +192,8 @@ func (*ginContext) host(c *binder.Context) error {
 	return nil
 }
 
-func (*ginContext) query(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*ginContext)
+func (*GinContext) query(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*GinContext)
 	if !ok {
 		return errContextExpected
 	}
@@ -196,8 +212,8 @@ func (*ginContext) query(c *binder.Context) error {
 	return nil
 }
 
-func (*ginContext) params(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*ginContext)
+func (*GinContext) params(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*GinContext)
 	if !ok {
 		return errContextExpected
 	}
@@ -224,8 +240,8 @@ func (*ginContext) params(c *binder.Context) error {
 	return nil
 }
 
-func (*ginContext) requestHeaders(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*ginContext)
+func (*GinContext) requestHeaders(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*GinContext)
 	if !ok {
 		return errContextExpected
 	}
@@ -246,8 +262,8 @@ func (*ginContext) requestHeaders(c *binder.Context) error {
 	return nil
 }
 
-func (*ginContext) headerList(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*ginContext)
+func (*GinContext) headerList(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*GinContext)
 	if !ok {
 		return errContextExpected
 	}
@@ -286,8 +302,8 @@ func (*ginContext) headerList(c *binder.Context) error {
 	return nil
 }
 
-func (*ginContext) requestBody(c *binder.Context) error {
-	req, ok := c.Arg(1).Data().(*ginContext)
+func (*GinContext) requestBody(c *binder.Context) error {
+	req, ok := c.Arg(1).Data().(*GinContext)
 	if !ok {
 		return errContextExpected
 	}
