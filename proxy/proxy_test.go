@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	lua "github.com/krakendio/krakend-lua/v2"
+	lua "github.com/krakend/krakend-lua/v2"
 	"github.com/luraproject/lura/v2/config"
 	"github.com/luraproject/lura/v2/encoding"
 	"github.com/luraproject/lura/v2/logging"

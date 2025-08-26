@@ -1,6 +1,6 @@
 package decorator
 
-import "github.com/krakendio/binder"
+import "github.com/krakend/binder"
 
 func RegisterNil(b *binder.Binder) {
 	tab := b.Table("luaNil")

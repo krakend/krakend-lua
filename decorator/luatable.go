@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/krakendio/binder"
-	lua "github.com/krakendio/krakend-lua/v2"
+	"github.com/krakend/binder"
+	lua "github.com/krakend/krakend-lua/v2"
 	"github.com/luraproject/lura/v2/transport/http/client"
 )
 

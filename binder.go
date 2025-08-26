@@ -3,7 +3,7 @@ package lua
 import (
 	"strings"
 
-	"github.com/krakendio/binder"
+	"github.com/krakend/binder"
 )
 
 type Binder = binder.Binder
@@ -44,7 +44,7 @@ func (b BinderWrapper) WithConfig(cfg *Config) error {
 	return nil
 }
 
-func (b BinderWrapper) WithCode(key string, src string) error {
+func (b BinderWrapper) WithCode(key, src string) error {
 	if err := b.binder.DoString(src); err != nil {
 		v := *b.sourceMap
 		v.Append(key, src)

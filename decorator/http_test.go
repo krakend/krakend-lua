@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/krakendio/binder"
+	"github.com/krakend/binder"
 )
 
 func ExampleRegisterHTTPRequest() {
