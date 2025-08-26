@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/krakendio/binder"
-	lua "github.com/krakendio/krakend-lua/v2"
-	"github.com/krakendio/krakend-lua/v2/decorator"
+	"github.com/krakend/binder"
+	lua "github.com/krakend/krakend-lua/v2"
+	"github.com/krakend/krakend-lua/v2/decorator"
 	"github.com/luraproject/lura/v2/config"
 	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"

@@ -3,7 +3,7 @@ package lua
 import (
 	"strings"
 
-	"github.com/krakendio/binder"
+	"github.com/krakend/binder"
 )
 
 type Binder = binder.Binder

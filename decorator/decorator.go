@@ -3,7 +3,7 @@ package decorator
 import (
 	"errors"
 
-	"github.com/krakendio/binder"
+	"github.com/krakend/binder"
 )
 
 type Decorator func(*binder.Binder)

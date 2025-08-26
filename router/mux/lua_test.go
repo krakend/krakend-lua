@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krakendio/krakend-lua/v2/router"
+	"github.com/krakend/krakend-lua/v2/router"
 	"github.com/luraproject/lura/v2/config"
 	"github.com/luraproject/lura/v2/logging"
 	"github.com/luraproject/lura/v2/proxy"

@@ -3,7 +3,7 @@ package decorator
 import (
 	"fmt"
 
-	"github.com/krakendio/binder"
+	"github.com/krakend/binder"
 )
 
 const separator = " || "

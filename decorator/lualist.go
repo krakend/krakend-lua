@@ -3,8 +3,8 @@ package decorator
 import (
 	"encoding/json"
 
-	"github.com/krakendio/binder"
-	lua "github.com/krakendio/krakend-lua/v2"
+	"github.com/krakend/binder"
+	lua "github.com/krakend/krakend-lua/v2"
 )
 
 func RegisterLuaList(b *binder.Binder) {
