@@ -10,16 +10,16 @@ import (
 	"strings"
 	"testing"
 
-	lua "github.com/krakend/krakend-lua/v2"
-	"github.com/luraproject/lura/v2/config"
-	"github.com/luraproject/lura/v2/encoding"
-	"github.com/luraproject/lura/v2/logging"
-	"github.com/luraproject/lura/v2/proxy"
-	"github.com/luraproject/lura/v2/transport/http/client"
+	lua "github.com/krakend/krakend-lua/v3"
+	"github.com/luraproject/lura/v3/config"
+	"github.com/luraproject/lura/v3/encoding"
+	"github.com/luraproject/lura/v3/logging"
+	"github.com/luraproject/lura/v3/proxy"
+	"github.com/luraproject/lura/v3/transport/http/client"
 )
 
 func TestProxyFactory_luaError(t *testing.T) {
-	var luaErrorTestTable = []struct {
+	luaErrorTestTable := []struct {
 		Name          string
 		Cfg           map[string]interface{}
 		ExpectedError string
@@ -235,7 +235,6 @@ func TestProxyFactory_luaError(t *testing.T) {
 					ProxyNamespace: test.Cfg,
 				},
 			})
-
 			if err != nil {
 				t.Error(err)
 			}
@@ -308,7 +307,6 @@ func testProxyFactoryError(t *testing.T, code, errMsg, contentType string, isHTT
 			},
 		},
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -395,7 +393,6 @@ func testProxyFactoryPostError(t *testing.T, code, errMsg, contentType string, i
 			},
 		},
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -611,7 +608,6 @@ func TestProxyFactory(t *testing.T) { // skipcq: GO-R1005
 			},
 		},
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -773,7 +769,6 @@ func Test_Issue7(t *testing.T) {
 			},
 		},
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -788,7 +783,6 @@ func Test_Issue7(t *testing.T) {
 		URL:     URL,
 		Body:    io.NopCloser(strings.NewReader("initial req content")),
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -829,7 +823,6 @@ responseData:set("id", responseData:get("id")+1)
 			},
 		},
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -844,7 +837,6 @@ responseData:set("id", responseData:get("id")+1)
 		URL:     URL,
 		Body:    io.NopCloser(strings.NewReader("initial req content")),
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -918,7 +910,6 @@ responseData:del("data")
 			},
 		},
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -933,7 +924,6 @@ responseData:del("data")
 		URL:     URL,
 		Body:    io.NopCloser(strings.NewReader("initial req content")),
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -989,7 +979,6 @@ responseData:set("grow_list", growingList)
 			},
 		},
 	})
-
 	if err != nil {
 		t.Error(err)
 	}
@@ -1081,7 +1070,6 @@ responseData:set("name_b", errorB:get('name'))
 			},
 		},
 	})
-
 	if err != nil {
 		t.Error(err)
 	}

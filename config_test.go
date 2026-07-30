@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/luraproject/lura/v2/config"
-	"github.com/luraproject/lura/v2/logging"
+	"github.com/luraproject/lura/v3/config"
+	"github.com/luraproject/lura/v3/logging"
 )
 
 func TestParse(t *testing.T) {
@@ -84,7 +84,7 @@ func TestParse_live(t *testing.T) {
 		t.Errorf("wrong content %s", src)
 	}
 
-	if err := os.WriteFile(source, []byte(finalContent), 0644); err != nil {
+	if err := os.WriteFile(source, []byte(finalContent), 0o644); err != nil {
 		t.Error(err)
 		return
 	}

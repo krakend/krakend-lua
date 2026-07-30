@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/luraproject/lura/v2/config"
-	"github.com/luraproject/lura/v2/logging"
-	"github.com/luraproject/lura/v2/proxy"
+	"github.com/luraproject/lura/v3/config"
+	"github.com/luraproject/lura/v3/logging"
+	"github.com/luraproject/lura/v3/proxy"
 )
 
 var localResponse *proxy.Response
@@ -65,7 +65,6 @@ func BenchmarkProxyFactory(b *testing.B) {
 			},
 		},
 	})
-
 	if err != nil {
 		b.Error(err)
 	}
@@ -121,7 +120,6 @@ func BenchmarkProxyFactoryWithCustomError(b *testing.B) {
 			},
 		},
 	})
-
 	if err != nil {
 		b.Error(err)
 	}
@@ -177,7 +175,6 @@ func BenchmarkProxyFactoryWithLuaError(b *testing.B) {
 			},
 		},
 	})
-
 	if err != nil {
 		b.Error(err)
 	}

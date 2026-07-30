@@ -11,13 +11,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/krakend/binder"
-	lua "github.com/krakend/krakend-lua/v2"
-	"github.com/krakend/krakend-lua/v2/decorator"
-	"github.com/krakend/krakend-lua/v2/router"
-	"github.com/luraproject/lura/v2/config"
-	"github.com/luraproject/lura/v2/logging"
-	"github.com/luraproject/lura/v2/proxy"
-	krakendgin "github.com/luraproject/lura/v2/router/gin"
+	lua "github.com/krakend/krakend-lua/v3"
+	"github.com/krakend/krakend-lua/v3/decorator"
+	"github.com/krakend/krakend-lua/v3/router"
+	"github.com/luraproject/lura/v3/config"
+	"github.com/luraproject/lura/v3/logging"
+	"github.com/luraproject/lura/v3/proxy"
+	krakendgin "github.com/luraproject/lura/v3/router/gin"
 	glua "github.com/yuin/gopher-lua"
 )
 
