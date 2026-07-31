@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"github.com/krakend/binder"
-	lua "github.com/krakend/krakend-lua/v2"
-	"github.com/luraproject/lura/v2/transport/http/client"
+	lua "github.com/krakend/krakend-lua/v3"
+	"github.com/luraproject/lura/v3/transport/http/client"
 )
 
 func RegisterLuaTable(b *binder.Binder) {

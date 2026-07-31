@@ -8,10 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krakend/krakend-lua/v2/router"
-	"github.com/luraproject/lura/v2/config"
-	"github.com/luraproject/lura/v2/logging"
-	"github.com/luraproject/lura/v2/proxy"
+	"github.com/krakend/krakend-lua/v3/router"
+	"github.com/luraproject/lura/v3/config"
+	"github.com/luraproject/lura/v3/logging"
+	"github.com/luraproject/lura/v3/proxy"
 )
 
 func TestHandlerFactory(t *testing.T) {
@@ -212,7 +212,7 @@ func TestHandlerFactory_errorHTTPWithContentType(t *testing.T) {
 }
 
 func TestHandlerFactory_luaError(t *testing.T) {
-	var luaPreErrorTestTable = []struct {
+	luaPreErrorTestTable := []struct {
 		Name          string
 		Cfg           map[string]interface{}
 		ExpectedError string
@@ -342,5 +342,4 @@ func TestHandlerFactory_luaError(t *testing.T) {
 			}
 		})
 	}
-
 }

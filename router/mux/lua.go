@@ -10,13 +10,13 @@ import (
 	"net/url"
 
 	"github.com/krakend/binder"
-	lua "github.com/krakend/krakend-lua/v2"
-	"github.com/krakend/krakend-lua/v2/decorator"
-	"github.com/krakend/krakend-lua/v2/router"
-	"github.com/luraproject/lura/v2/config"
-	"github.com/luraproject/lura/v2/logging"
-	"github.com/luraproject/lura/v2/proxy"
-	mux "github.com/luraproject/lura/v2/router/mux"
+	lua "github.com/krakend/krakend-lua/v3"
+	"github.com/krakend/krakend-lua/v3/decorator"
+	"github.com/krakend/krakend-lua/v3/router"
+	"github.com/luraproject/lura/v3/config"
+	"github.com/luraproject/lura/v3/logging"
+	"github.com/luraproject/lura/v3/proxy"
+	mux "github.com/luraproject/lura/v3/router/mux"
 	glua "github.com/yuin/gopher-lua"
 )
 

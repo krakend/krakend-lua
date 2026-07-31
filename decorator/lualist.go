@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/krakend/binder"
-	lua "github.com/krakend/krakend-lua/v2"
+	lua "github.com/krakend/krakend-lua/v3"
 )
 
 func RegisterLuaList(b *binder.Binder) {

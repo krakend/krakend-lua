@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/krakend/binder"
-	lua "github.com/krakend/krakend-lua/v2"
+	lua "github.com/krakend/krakend-lua/v3"
 
-	"github.com/luraproject/lura/v2/transport/http/server"
+	"github.com/luraproject/lura/v3/transport/http/server"
 )
 
 func RegisterHTTPRequest(ctx context.Context, b *binder.Binder) {
@@ -35,9 +35,7 @@ func newHttpResponse(ctx context.Context) func(*binder.Context) error {
 		var req *http.Request
 
 		if c.Top() == 1 {
-
 			req, _ = http.NewRequest("GET", URL, http.NoBody)
-
 		} else {
 
 			method := c.Arg(2).String()
