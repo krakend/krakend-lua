@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/krakend/binder"
 	lua "github.com/krakend/krakend-lua/v3"
@@ -19,7 +20,7 @@ const (
 
 func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 	return proxy.FactoryFunc(func(remote *config.EndpointConfig) (proxy.Proxy, error) {
-		logPrefix := "[ENDPOINT: " + remote.Endpoint + "][Lua]"
+		logPrefix := fmt.Sprintf("[ENDPOINT: %s %s][Lua]", remote.Method, remote.Endpoint)
 		next, err := pf.New(remote)
 		if err != nil {
 			return next, err
