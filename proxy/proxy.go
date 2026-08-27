@@ -42,7 +42,9 @@ func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 
 func BackendFactory(l logging.Logger, bf proxy.BackendFactory) proxy.BackendFactory {
 	return func(remote *config.Backend) proxy.Proxy {
-		logPrefix := "[BACKEND: " + remote.URLPattern + "][Lua]"
+		logPrefix := fmt.Sprintf("[BACKEND: %s %s -> %s %s][Lua]",
+			remote.ParentEndpointMethod, remote.ParentEndpoint,
+			remote.Method, remote.URLPattern)
 		next := bf(remote)
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, BackendNamespace)
