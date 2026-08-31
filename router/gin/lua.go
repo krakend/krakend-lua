@@ -46,7 +46,7 @@ func Register(l logging.Logger, extraConfig config.ExtraConfig, engine *gin.Engi
 
 func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin.HandlerFactory {
 	return func(remote *config.EndpointConfig, p proxy.Proxy) gin.HandlerFunc {
-		logPrefix := "[ENDPOINT: " + remote.Endpoint + "][Lua]"
+		logPrefix := fmt.Sprintf("[ENDPOINT: %s %s][Lua]", remote.Method, remote.Endpoint)
 		handlerFunc := next(remote, p)
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, router.Namespace)

@@ -53,7 +53,7 @@ func (hm *middleware) Handler(h http.Handler) http.Handler {
 
 func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtractor) mux.HandlerFactory {
 	return func(remote *config.EndpointConfig, p proxy.Proxy) http.HandlerFunc {
-		logPrefix := "[ENDPOINT: " + remote.Endpoint + "][Lua]"
+		logPrefix := fmt.Sprintf("[ENDPOINT: %s %s][Lua]", remote.Method, remote.Endpoint)
 		handlerFunc := next(remote, p)
 
 		cfg, err := lua.Parse(l, remote.ExtraConfig, router.Namespace)
