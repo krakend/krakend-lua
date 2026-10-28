@@ -32,17 +32,18 @@ func RegisterMiddleware(l logging.Logger, e config.ExtraConfig, pe mux.ParamExtr
 
 	l.Debug(logPrefix, "Middleware is now ready")
 
-	return append(mws, &middleware{pe: pe, cfg: cfg})
+	return append(mws, &middleware{l: l, pe: pe, cfg: cfg})
 }
 
 type middleware struct {
+	l   logging.Logger
 	pe  mux.ParamExtractor
 	cfg lua.Config
 }
 
 func (hm *middleware) Handler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := process(r, hm.pe, &hm.cfg); err != nil {
+		if err := process(hm.l, r, hm.pe, &hm.cfg); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -67,7 +68,7 @@ func HandlerFactory(l logging.Logger, next mux.HandlerFactory, pe mux.ParamExtra
 		l.Debug(logPrefix, "Middleware is now ready")
 
 		return func(w http.ResponseWriter, r *http.Request) {
-			if err := process(r, pe, &cfg); err != nil {
+			if err := process(l, r, pe, &cfg); err != nil {
 				if errhttp, ok := err.(errHTTP); ok {
 					if e, ok := err.(errHTTPWithContentType); ok {
 						w.Header().Add("content-type", e.Encoding())
@@ -96,7 +97,7 @@ type errHTTPWithContentType interface {
 	Encoding() string
 }
 
-func process(r *http.Request, pe mux.ParamExtractor, cfg *lua.Config) error {
+func process(l logging.Logger, r *http.Request, pe mux.ParamExtractor, cfg *lua.Config) error {
 	b := lua.NewBinderWrapper(binder.Options{
 		SkipOpenLibs:        !cfg.AllowOpenLibs,
 		IncludeGoStackTrace: true,
@@ -107,6 +108,15 @@ func process(r *http.Request, pe mux.ParamExtractor, cfg *lua.Config) error {
 	decorator.RegisterLuaTable(b.GetBinder())
 	decorator.RegisterLuaList(b.GetBinder())
 	decorator.RegisterHTTPRequest(r.Context(), b.GetBinder())
+
+	decorator.RegisterBase64(b.GetBinder())
+	decorator.RegisterHashing(b.GetBinder())
+	decorator.RegisterJson(b.GetBinder())
+	decorator.RegisterYaml(b.GetBinder())
+	decorator.RegisterXml(b.GetBinder())
+	decorator.RegisterCsv(b.GetBinder())
+	decorator.RegisterTime(b.GetBinder())
+	decorator.RegisterDebug(l, parseNativeUserData, b.GetBinder())
 	registerRequestTable(r, pe, b.GetBinder())
 
 	if err := b.WithConfig(cfg); err != nil {

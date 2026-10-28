@@ -3,10 +3,13 @@ module github.com/krakend/krakend-lua/v3
 go 1.25.0
 
 require (
+	github.com/clbanning/mxj/v2 v2.7.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/krakend/binder v0.0.0-20250826131726-e91a8a754ef8
 	github.com/luraproject/lura/v3 v3.0.0-20260729144624-4b3057d09348
 	github.com/yuin/gopher-lua v1.1.1
+	golang.org/x/net v0.55.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -41,7 +44,6 @@ require (
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/crypto v0.52.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect

@@ -36,7 +36,7 @@ func ProxyFactory(l logging.Logger, pf proxy.Factory) proxy.Factory {
 
 		l.Debug(logPrefix, "Middleware is now ready")
 
-		return New(cfg, next), nil
+		return NewWithLogger(l, cfg, next), nil
 	})
 }
 
@@ -55,7 +55,7 @@ func BackendFactory(l logging.Logger, bf proxy.BackendFactory) proxy.BackendFact
 			return next
 		}
 
-		return New(cfg, next)
+		return NewWithLogger(l, cfg, next)
 	}
 }
 
@@ -69,7 +69,14 @@ func RegisterDecorator(f decorator.Decorator) {
 	localRegisterer.decorators = append(localRegisterer.decorators, f)
 }
 
-func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
+func NewWithLogger(l logging.Logger, cfg lua.Config, next proxy.Proxy) proxy.Proxy {
+	if l == nil {
+		return new(logging.NoOp, cfg, next)
+	}
+	return new(l, cfg, next)
+}
+
+func new(l logging.Logger, cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 	return func(ctx context.Context, req *proxy.Request) (resp *proxy.Response, err error) {
 		b := lua.NewBinderWrapper(binder.Options{
 			SkipOpenLibs:        !cfg.AllowOpenLibs,
@@ -82,6 +89,15 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 		decorator.RegisterLuaTable(b.GetBinder())
 		decorator.RegisterLuaList(b.GetBinder())
 		decorator.RegisterHTTPRequest(ctx, b.GetBinder())
+
+		decorator.RegisterBase64(b.GetBinder())
+		decorator.RegisterHashing(b.GetBinder())
+		decorator.RegisterJson(b.GetBinder())
+		decorator.RegisterYaml(b.GetBinder())
+		decorator.RegisterXml(b.GetBinder())
+		decorator.RegisterCsv(b.GetBinder())
+		decorator.RegisterTime(b.GetBinder())
+		decorator.RegisterDebug(l, parseNativeUserData, b.GetBinder())
 		for _, f := range localRegisterer.decorators {
 			f(b.GetBinder())
 		}
@@ -113,6 +129,11 @@ func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
 
 		return resp, nil
 	}
+}
+
+// New does not have a logger, so debug calls with this proxy won't log anything, use NewWithLogger instead
+func New(cfg lua.Config, next proxy.Proxy) proxy.Proxy {
+	return new(logging.NoOp, cfg, next)
 }
 
 var (

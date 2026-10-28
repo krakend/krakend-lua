@@ -34,7 +34,7 @@ func Register(l logging.Logger, extraConfig config.ExtraConfig, engine *gin.Engi
 	l.Debug(logPrefix, "Middleware is now ready")
 
 	engine.Use(func(c *gin.Context) {
-		if err := process(c, &cfg); err != nil {
+		if err := process(c, &cfg, l); err != nil {
 			l.Error(logPrefix, err.Error())
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return
@@ -60,7 +60,7 @@ func HandlerFactory(l logging.Logger, next krakendgin.HandlerFactory) krakendgin
 		l.Debug(logPrefix, "Middleware is now ready")
 
 		return func(c *gin.Context) {
-			if err := process(c, &cfg); err != nil {
+			if err := process(c, &cfg, l); err != nil {
 				if errhttp, ok := err.(errHTTP); ok {
 					if e, ok := err.(errHTTPWithContentType); ok {
 						c.Writer.Header().Add("content-type", e.Encoding())
@@ -98,7 +98,7 @@ func RegisterDecorator(f decorator.Decorator) {
 	localRegisterer.decorators = append(localRegisterer.decorators, f)
 }
 
-func process(c *gin.Context, cfg *lua.Config) error {
+func process(c *gin.Context, cfg *lua.Config, l logging.Logger) error {
 	b := lua.NewBinderWrapper(binder.Options{
 		SkipOpenLibs:        !cfg.AllowOpenLibs,
 		IncludeGoStackTrace: true,
@@ -110,6 +110,16 @@ func process(c *gin.Context, cfg *lua.Config) error {
 	decorator.RegisterLuaTable(b.GetBinder())
 	decorator.RegisterLuaList(b.GetBinder())
 	decorator.RegisterHTTPRequest(c, b.GetBinder())
+
+	decorator.RegisterBase64(b.GetBinder())
+	decorator.RegisterHashing(b.GetBinder())
+	decorator.RegisterJson(b.GetBinder())
+	decorator.RegisterYaml(b.GetBinder())
+	decorator.RegisterXml(b.GetBinder())
+	decorator.RegisterCsv(b.GetBinder())
+	decorator.RegisterTime(b.GetBinder())
+	decorator.RegisterDebug(l, parseNativeUserData, b.GetBinder())
+
 	for _, f := range localRegisterer.decorators {
 		f(b.GetBinder())
 	}
